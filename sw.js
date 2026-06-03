@@ -1,40 +1,52 @@
-const CACHE = 'assistant-professeur-v1';
-const URL_TO_CACHE = './assistant_professeur.html';
+const CACHE_NAME = 'assistant-professeur-v2';
+const HTML_FILE = './assistant_professeur.html';
 
+// عند التثبيت — نحمّل الـ HTML في الـ cache
 self.addEventListener('install', function(e) {
   e.waitUntil(
-    caches.open(CACHE).then(function(cache) {
-      // نحمّل كان الـ HTML — بلا ./ باش ما يفشلش
-      return cache.add(URL_TO_CACHE);
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.add(HTML_FILE);
+    }).catch(function(err) {
+      console.log('Cache install failed:', err);
     })
   );
   self.skipWaiting();
 });
 
+// عند التفعيل — نمسح الـ cache القديم
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
+      return Promise.all(
+        keys.filter(function(k) { return k !== CACHE_NAME; })
+            .map(function(k) { return caches.delete(k); })
+      );
     })
   );
   self.clients.claim();
 });
 
+// عند كل fetch — network first ثم cache
 self.addEventListener('fetch', function(e) {
-  // كان الـ HTML — network first، وإذا فشل نرجع من cache
-  if(e.request.mode === 'navigate' || e.request.url.includes('assistant_professeur.html')){
-    e.respondWith(
-      fetch(e.request)
-        .then(function(response) {
-          // نحفظ النسخة الجديدة في cache
+  if(e.request.method !== 'GET') return;
+  
+  e.respondWith(
+    fetch(e.request.clone())
+      .then(function(response) {
+        // إذا الرد صحيح — نحفظه في cache ونرجعو
+        if(response && response.ok) {
           const clone = response.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-          return response;
-        })
-        .catch(function() {
-          // بلا نت — نرجع من cache
-          return caches.match(URL_TO_CACHE);
-        })
-    );
-  }
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(e.request, clone);
+          });
+        }
+        return response;
+      })
+      .catch(function() {
+        // بلا نت — نرجع من cache
+        return caches.match(e.request).then(function(cached) {
+          return cached || caches.match(HTML_FILE);
+        });
+      })
+  );
 });
