@@ -1,0 +1,25 @@
+{
+  "name": "مساعد الاستاذ",
+  "short_name": "مساعد الأستاذ",
+  "description": "تطبيق متابعة التلاميذ والأعداد",
+  "start_url": "https://ramghh.github.io/assistant-prof/",
+  "display": "standalone",
+  "background_color": "#69634d",
+  "theme_color": "rgb(33, 9, 9)",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICAgIDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTAwIiBmaWxsPSIjMTgyMDMwIi8+CiAgICA8cmVjdCB4PSIzMCIgeT0iMzAiIHdpZHRoPSI0NTIiIGhlaWdodD0iNDUyIiByeD0iODAiIGZpbGw9IiMxZTI4NDAiLz4KICAgIDxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSIxMiIgcng9IjYiIGZpbGw9IiNmMGE4MzAiLz4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iMjIwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMTQwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2YwYTgzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+2YU8L3RleHQ+CiAgICA8dGV4dCB4PSIyNTYiIHk9IjM0MCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjUyIiBmaWxsPSIjZmZjODRhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBvcGFjaXR5PSIwLjkiPtmF2LPYp9i52K8g2KfZhNij2LPYqtin2LA8L3RleHQ+CiAgICA8cmVjdCB4PSI4MCIgeT0iMzkwIiB3aWR0aD0iMzUyIiBoZWlnaHQ9IjMiIHJ4PSIyIiBmaWxsPSIjZjBhODMwNTUiLz4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iNDQwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMzAiIGZpbGw9IiM3YThmYTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPtmF2KrYp9io2LnYqSDYp9mE2KrZhNin2YXZitiwPC90ZXh0PgogIDwvc3ZnPg==",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4KICAgIDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTAwIiBmaWxsPSIjMTgyMDMwIi8+CiAgICA8cmVjdCB4PSIzMCIgeT0iMzAiIHdpZHRoPSI0NTIiIGhlaWdodD0iNDUyIiByeD0iODAiIGZpbGw9IiMxZTI4NDAiLz4KICAgIDxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSIxMiIgcng9IjYiIGZpbGw9IiNmMGE4MzAiLz4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iMjIwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMTQwIiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iI2YwYTgzMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+2YU8L3RleHQ+CiAgICA8dGV4dCB4PSIyNTYiIHk9IjM0MCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjUyIiBmaWxsPSIjZmZjODRhIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBvcGFjaXR5PSIwLjkiPtmF2LPYp9i52K8g2KfZhNij2LPYqtin2LA8L3RleHQ+CiAgICA8cmVjdCB4PSI4MCIgeT0iMzkwIiB3aWR0aD0iMzUyIiBoZWlnaHQ9IjMiIHJ4PSIyIiBmaWxsPSIjZjBhODMwNTUiLz4KICAgIDx0ZXh0IHg9IjI1NiIgeT0iNDQwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMzAiIGZpbGw9IiM3YThmYTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPtmF2KrYp9io2LnYqSDYp9mE2KrZhNin2YXZitiwPC90ZXh0PgogIDwvc3ZnPg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
