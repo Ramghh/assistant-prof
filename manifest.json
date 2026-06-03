@@ -2,7 +2,7 @@
   "name": "مساعد الأستاذ",
   "short_name": "مساعد الأستاذ",
   "description": "تطبيق متابعة التلاميذ والأعداد",
-  "start_url": "./assistant_professeur.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

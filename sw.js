@@ -1,5 +1,5 @@
 const CACHE_NAME = 'assistant-professeur-v2';
-const HTML_FILE = './assistant_professeur.html';
+const HTML_FILE = './index.html';
 
 // عند التثبيت — نحمّل الـ HTML في الـ cache
 self.addEventListener('install', function(e) {
