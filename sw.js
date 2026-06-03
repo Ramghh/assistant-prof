@@ -1,9 +1,11 @@
 const CACHE = 'assistant-professeur-v1';
+const URL_TO_CACHE = './assistant_professeur.html';
 
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE).then(function(cache) {
-      return cache.addAll(['./assistant_professeur.html', './']);
+      // نحمّل كان الـ HTML — بلا ./ باش ما يفشلش
+      return cache.add(URL_TO_CACHE);
     })
   );
   self.skipWaiting();
@@ -19,17 +21,20 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  e.respondWith(
-    caches.match(e.request).then(function(cached) {
-      return cached || fetch(e.request).then(function(response) {
-        if(response && response.status === 200 && response.type === 'basic') {
+  // كان الـ HTML — network first، وإذا فشل نرجع من cache
+  if(e.request.mode === 'navigate' || e.request.url.includes('assistant_professeur.html')){
+    e.respondWith(
+      fetch(e.request)
+        .then(function(response) {
+          // نحفظ النسخة الجديدة في cache
           const clone = response.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
-        return response;
-      }).catch(function() {
-        return caches.match('./assistant_professeur.html');
-      });
-    })
-  );
+          return response;
+        })
+        .catch(function() {
+          // بلا نت — نرجع من cache
+          return caches.match(URL_TO_CACHE);
+        })
+    );
+  }
 });
