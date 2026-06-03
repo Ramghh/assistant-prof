@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>مساعد الأستاذ - النسخة الكاملة مع مقارنة الأقسام وجدول الاختبارات</title>
+<title>مساعد الأستاذ</title>
+<link rel="manifest" id="pwa-manifest"/>
+<meta name="theme-color" content="#f0a830"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="مساعد الأستاذ"/>
+<link rel="apple-touch-icon" id="pwa-apple-icon"/>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
 <style>
 /* ══ DARK THEME ══ */
@@ -218,13 +225,18 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--accent);border-radius:4px;}
 
-/* أنماط إضافية للصفحات الجديدة */
-.compare-chart{display:flex;align-items:flex-end;gap:20px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
-.compare-bar{width:70px;background:var(--gold);border-radius:8px 8px 0 0;text-align:center;color:#1a1208;font-weight:bold;padding-top:4px;transition:height 0.4s;}
-.exam-item{background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:12px;border-right:4px solid var(--gold);}
-.exam-soon{border-right-color:var(--orange);background:var(--orange)18;}
-.exam-warning{border-right-color:var(--red);background:var(--red)18;}
-.exam-date{font-weight:bold;color:var(--gold);}
+/* ══ GIST SYNC ══ */
+.gist-sync-btn{display:flex;align-items:center;gap:7px;width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #5a9fd444;background:transparent;color:#5a9fd4;font-family:'Amiri',serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-bottom:7px;}
+.gist-sync-btn:hover{background:#5a9fd418;border-color:#5a9fd4;}
+.gist-sync-btn.syncing{opacity:0.7;pointer-events:none;}
+.gist-sync-btn .spin{display:inline-block;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.sync-status{font-size:0.72rem;color:var(--text2);text-align:center;margin-top:3px;min-height:16px;}
+.sync-status.ok{color:var(--green);}
+.sync-status.err{color:var(--red);}
+.gist-modal-note{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.7;}
+.gist-modal-note a{color:#5a9fd4;text-decoration:none;}
+.gist-modal-note a:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -283,6 +295,19 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
     <button class="btn btn-outline btn-sm btn-full" style="margin-top:8px" onclick="addClass()">+ قسم جديد</button>
   </div>
 
+  <!-- GIST SYNC -->
+  <div class="sidebar-section" style="padding-bottom:12px;">
+    <div class="sidebar-section-title">☁️ مزامنة GitHub Gist</div>
+    <button class="gist-sync-btn" id="gist-upload-btn" onclick="gistUpload()">
+      <span>⬆️</span> رفع البيانات
+    </button>
+    <button class="gist-sync-btn" id="gist-download-btn" onclick="gistDownload()">
+      <span>⬇️</span> تحميل البيانات
+    </button>
+    <div class="sync-status" id="sync-status-msg"></div>
+    <button onclick="openGistSettings()" style="background:none;border:none;color:var(--text2);font-size:0.75rem;cursor:pointer;width:100%;text-align:center;padding:3px;margin-top:2px;">⚙️ إعدادات Gist</button>
+  </div>
+
   <!-- ACTIONS -->
   <div class="sidebar-footer">
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
@@ -313,8 +338,6 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
   <button class="nav-btn" onclick="showPage('annual',this)">📊 ملخص سنوي</button>
   <button class="nav-btn" onclick="showPage('rapport',this)">📈 تقرير</button>
   <button class="nav-btn" onclick="showPage('absence',this)">📋 سجل الغياب</button>
-  <button class="nav-btn" onclick="showPage('compare',this)">🏆 مقارنة الأقسام</button>
-  <button class="nav-btn" onclick="showPage('exams',this)">📅 جدول الاختبارات</button>
 </div>
 
 <!-- SAVE BANNER -->
@@ -488,47 +511,59 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
     </div>
   </div>
 
-  <!-- PAGE: COMPARE (مقارنة الأقسام) -->
-  <div class="page" id="page-compare">
-    <div class="card">
-      <div class="card-title">🏆 مقارنة الأقسام</div>
-      <div style="overflow-x:auto">
-        <table class="stbl">
-          <thead>
-            <tr><th>القسم</th><th>عدد التلاميذ</th><th>معدل ث1</th><th>معدل ث2</th><th>معدل ث3</th><th>المعدل السنوي</th><th>أعلى نقطة</th><th>أدنى نقطة</th></tr>
-          </thead>
-          <tbody id="compare-tbody"></tbody>
-        </table>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">📋 إضافة قائمة التلاميذ</div>
+    <textarea id="paste-area" rows="9" placeholder="أحمد بن علي&#10;مريم الطرابلسي&#10;..." style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:10px;border-radius:9px;outline:none;resize:vertical;line-height:1.9;margin-bottom:10px" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn btn-gold" onclick="parsePaste()">✅ معالجة</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('import-modal')">إلغاء</button>
+    </div>
+    <div id="import-result" style="display:none">
+      <div style="color:var(--text2);margin-bottom:7px;font-size:0.82rem">✏️ راجع وعدّل:</div>
+      <div id="names-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="confirmImport()">✅ إضافة</button>
+        <button class="btn btn-outline btn-sm" onclick="addNameRow()">+ اسم</button>
+        <button class="btn btn-danger btn-sm" onclick="closeModal('import-modal')">إلغاء</button>
       </div>
-      <div id="compare-chart" class="compare-chart"></div>
     </div>
   </div>
+</div>
 
-  <!-- PAGE: EXAMS (جدول الاختبارات) -->
-  <div class="page" id="page-exams">
-    <div class="card">
-      <div class="card-title">📅 جدول الاختبارات (فروض / تاليفي)</div>
-      <div id="exam-alert" class="alert-box alert-warn" style="display:none; margin-bottom:12px"></div>
-      <div class="form-row" style="margin-bottom:16px">
-        <div class="form-group"><label>نوع الاختبار</label><select id="exam-type"><option value="fardh">فرض</option><option value="taliffi">تاليفي</option></select></div>
-        <div class="form-group"><label>المادة</label><input type="text" id="exam-subject" placeholder="مثل: إنجليزية"/></div>
-        <div class="form-group"><label>التاريخ</label><input type="date" id="exam-date"/></div>
-        <div class="form-group"><label>الساعة</label><input type="time" id="exam-time"/></div>
-        <div class="form-group"><label>القسم</label><select id="exam-class"></select></div>
-        <div class="form-group"><button class="btn btn-gold" onclick="addExam()">➕ إضافة اختبار</button></div>
-      </div>
-      <div id="exam-list"></div>
-      <div id="exam-empty" class="empty" style="display:none">لا توجد اختبارات مسجلة</div>
+<!-- EDIT ALL MODAL -->
+<div class="modal-overlay" id="edit-all-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ تعديل قائمة التلاميذ</div>
+    <div id="edit-all-list" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="confirmEditAll()">✅ حفظ التعديلات</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('edit-all-modal')">إلغاء</button>
     </div>
   </div>
+</div>
 
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal">
+    <div class="modal-title">📄 تصدير — اختر الفترة</div>
+    <div class="trim-select-row">
+      <div class="trim-sel-btn selected" data-trim="1" onclick="selectExportTrim(this)">📘 الثلاثي الأول</div>
+      <div class="trim-sel-btn" data-trim="2" onclick="selectExportTrim(this)">📗 الثلاثي الثاني</div>
+      <div class="trim-sel-btn" data-trim="3" onclick="selectExportTrim(this)">📙 الثلاثي الثالث</div>
+      <div class="trim-sel-btn" data-trim="0" onclick="selectExportTrim(this)">📊 السنة كاملة</div>
+    </div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn btn-green" onclick="doExportWord()">📄 تصدير</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('export-modal')">إلغاء</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// ======================= الكود الأصلي الكامل (مع الحفاظ على كل شيء) =======================
-// تم إضافة دوال جديدة في الأسفل لمقارنة الأقسام وجدول الاختبارات
-// وتعديل دالة showPage لتشمل الصفحات الجديدة
-
 // ══════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════
@@ -537,7 +572,7 @@ let unsaved=false,pendingNotes={};
 let allData=JSON.parse(localStorage.getItem('allData')||'{}');
 let isDark=localStorage.getItem('theme')!=='light';
 
-function getYearData(){if(!currentSchoolYear)return null;if(!allData[currentSchoolYear])allData[currentSchoolYear]={classes:[],classData:{},absences:{},exams:[]};return allData[currentSchoolYear];}
+function getYearData(){if(!currentSchoolYear)return null;if(!allData[currentSchoolYear])allData[currentSchoolYear]={classes:[],classData:{},absences:{}};return allData[currentSchoolYear];}
 function getCData(cid){const yd=getYearData();if(!yd)return null;const id=cid||currentClassId;if(!yd.classData[id])yd.classData[id]={students:[],notes:{},nextId:1};return yd.classData[id];}
 function getStudents(cid){const d=getCData(cid);return d?d.students:[];}
 function getClasses(){const yd=getYearData();return yd?yd.classes:[];}
@@ -668,7 +703,7 @@ function moyenneAnnuelle(sid,cid){
 function initSchoolYears(){
   const now=new Date();const y=now.getFullYear();
   const adminYear=now.getMonth()>=8?`${y}-${y+1}`:`${y-1}-${y}`;
-  if(!allData[adminYear])allData[adminYear]={classes:[],classData:{},absences:{},exams:[]};
+  if(!allData[adminYear])allData[adminYear]={classes:[],classData:{},absences:{}};
   const years=new Set(Object.keys(allData));
   for(let i=y+1;i>=y-3;i--)years.add(`${i-1}-${i}`);
   const sorted=[...years].sort().reverse();
@@ -681,18 +716,15 @@ function initSchoolYears(){
 function switchSchoolYear(yr){
   if(unsaved){flushPending();saveAll();}
   currentSchoolYear=yr;
-  if(!allData[yr])allData[yr]={classes:[],classData:{},absences:{},exams:[]};
+  if(!allData[yr])allData[yr]={classes:[],classData:{},absences:{}};
   document.getElementById('header-year').textContent=yr;
   saveAll();initClasses();renderAbsence();
-  // لإعادة تحميل صفحات المقارنة والاختبارات إذا كانت مفتوحة
-  if(document.getElementById('page-compare').classList.contains('active')) renderCompare();
-  if(document.getElementById('page-exams').classList.contains('active')) { loadExamClassSelect(); renderExams(); }
 }
 function addSchoolYear(){
   const yr=prompt('أدخل السنة الدراسية (مثال: 2026-2027)');
   if(!yr||!/^\d{4}-\d{4}$/.test(yr.trim())){if(yr)alert('صيغة غير صحيحة');return;}
   const y=yr.trim();
-  if(!allData[y])allData[y]={classes:[],classData:{},absences:{},exams:[]};
+  if(!allData[y])allData[y]={classes:[],classData:{},absences:{}};
   saveAll();
   const sel=document.getElementById('school-year-sel');
   if(![...sel.options].some(o=>o.value===y)){const opt=document.createElement('option');opt.value=opt.textContent=y;sel.insertBefore(opt,sel.firstChild);}
@@ -732,8 +764,6 @@ function switchClass(id){
   currentClassId=id;renderClassList();renderTable();updateHeaderPill();
   if(document.getElementById('page-annual').classList.contains('active'))renderAnnual();
   loadTeacherFields();loadSubjectSettings();
-  if(document.getElementById('page-compare').classList.contains('active')) renderCompare();
-  if(document.getElementById('page-exams').classList.contains('active')) { loadExamClassSelect(); renderExams(); }
 }
 function addClass(){
   const name=prompt('اسم القسم (مثال: 9 أساسي 3)');if(!name||!name.trim())return;
@@ -775,11 +805,8 @@ function showPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
-  if(name==='annual'){flushPending();renderAnnual();}
-  if(name==='rapport'){renderRapport();}
+  if(name==='annual'){flushPending();renderAnnual();} if(name==='rapport'){renderRapport();}
   if(name==='absence')renderAbsence();
-  if(name==='compare')renderCompare();
-  if(name==='exams'){loadExamClassSelect(); renderExams();}
 }
 function setTrim(n,btn){
   if(unsaved){flushPending();saveAll();}
@@ -1052,7 +1079,7 @@ function doExportWord(){
     });
 
     if(exportTrimChoice===0){
-      html+=`<h3>الملخص السنوي</h3></table><thead>胡萝卜
+      html+=`<h3>الملخص السنوي</h3><table><thead><tr>
         <th>#</th><th>الاسم واللقب</th><th>معدل ث1</th><th>معدل ث2</th><th>معدل ث3</th><th>المعدل السنوي</th><th>النتيجة</th>
       </tr></thead><tbody>`;
       students.forEach(function(s,i){
@@ -1068,7 +1095,39 @@ function doExportWord(){
     }
   }
 
-  html+=`<div class="footer">تاريخ التصدير: ${new Date().toLocaleDateString('ar-TN')}</div></body></html>`;
+  html+=`<div class="footer">تاريخ التصدير: ${new Date().toLocaleDateString('ar-TN')}</div>
+<!-- TRANSFER MODAL -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">🔄 نقل أعداد بين الثلاثيات</div>
+    <div style="color:var(--text2);font-size:0.85rem;margin-bottom:16px">انقل أعداد ثلاثي لثلاثي آخر — الأعداد الموجودة في الوجهة باش تتمسح</div>
+    <div class="form-row" style="margin-bottom:14px">
+      <div class="form-group">
+        <label>من الثلاثي</label>
+        <select id="transfer-from">
+          <option value="1">📘 الثلاثي الأول</option>
+          <option value="2">📗 الثلاثي الثاني</option>
+          <option value="3">📙 الثلاثي الثالث</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>إلى الثلاثي</label>
+        <select id="transfer-to">
+          <option value="1">📘 الثلاثي الأول</option>
+          <option value="2">📗 الثلاثي الثاني</option>
+          <option value="3" selected>📙 الثلاثي الثالث</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:0.83rem;color:var(--orange)">
+      ⚠️ الأعداد في الثلاثي الوجهة باش تتمسح وتتعوّض بالأعداد الجديدة
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="confirmTransfer()">🔄 نقل</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('transfer-modal')">إلغاء</button>
+    </div>
+  </div>
+</div></body></html>`;
 
   const blob=new Blob(['\ufeff'+html],{type:'application/msword;charset=utf-8'});
   const url=URL.createObjectURL(blob);
@@ -1174,8 +1233,17 @@ function importJSON(event){
 }
 
 // ══════════════════════════════════════
-//  TRANSFER GRADES
+//  INIT
 // ══════════════════════════════════════
+window.addEventListener('beforeunload',function(){if(unsaved){flushPending();saveAll();}});
+applyTheme();
+initAbsenceYears();
+initSchoolYears();
+initClasses();
+updateLastEdit();
+document.getElementById('absence-date').value=new Date().toISOString().split('T')[0];
+
+// TRANSFER GRADES
 function openTransferModal(){
   document.getElementById('transfer-modal').classList.add('open');
 }
@@ -1186,6 +1254,7 @@ function confirmTransfer(){
   const d=getCData();if(!d)return;
   const trimNames={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'};
   if(!confirm('باش تنقل أعداد '+trimNames[from]+' إلى '+trimNames[to]+'. الأعداد الموجودة في '+trimNames[to]+' باش تتمسح. تأكد؟'))return;
+  // flush pending first
   flushPending();
   const students=getStudents();
   students.forEach(function(s){
@@ -1198,6 +1267,7 @@ function confirmTransfer(){
     }
   });
   saveAll();
+  // switch to destination trim
   currentTrim=to;
   document.querySelectorAll('.trim-btn').forEach(function(b,i){
     b.classList.toggle('active',i+1===to);
@@ -1207,10 +1277,7 @@ function confirmTransfer(){
   closeModal('transfer-modal');
   alert('تم نقل الأعداد من '+trimNames[from]+' إلى '+trimNames[to]+' ✅');
 }
-
-// ══════════════════════════════════════
-//  RAPPORT
-// ══════════════════════════════════════
+// RAPPORT
 let rapportTrim=1, rapportExam='fardh1';
 
 function setRapportTrim(n,btn){
@@ -1298,7 +1365,7 @@ function renderRapport(){
     var cls=v>=14?'bg':v>=10?'bo':'br';
     return '<tr><td>'+(i+1)+'</td><td>'+s.nom+'</td>'+
       '<td><span class="badge '+cls+'">'+v.toFixed(2)+'</span></td>'+
-      '<td><span class="badge '+cls+'">'+(v>=10?'ناجح ✅':'راسب ❌')+'</span></td></td>';
+      '<td><span class="badge '+cls+'">'+(v>=10?'ناجح ✅':'راسب ❌')+'</span></td></tr>';
   }).join('');
 }
 
@@ -1376,220 +1443,206 @@ function exportRapportWord(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
-// ======================= دوال جديدة لمقارنة الأقسام وجدول الاختبارات =======================
-
-// -------------- مقارنة الأقسام --------------
-function renderCompare() {
-  const classes = getClasses();
-  if(!classes.length) {
-    document.getElementById('compare-tbody').innerHTML = '<tr><td colspan="8">لا توجد أقسام</td></tr>';
-    document.getElementById('compare-chart').innerHTML = '';
-    return;
-  }
-  const stats = [];
-  for(let c of classes) {
-    const cd = getCData(c.id);
-    if(!cd) continue;
-    const students = cd.students;
-    // حساب معدل لكل ثلاثي
-    const trimAvgs = [1,2,3].map(t => {
-      let sum=0, count=0;
-      students.forEach(s => {
-        let m = parseFloat(moyenne(s.id, t, c.id));
-        if(!isNaN(m)) { sum+=m; count++; }
-      });
-      return count ? (sum/count).toFixed(2) : '—';
-    });
-    // المعدل السنوي
-    let annualSum=0, annualCount=0;
-    students.forEach(s => {
-      let a = parseFloat(moyenneAnnuelle(s.id, c.id));
-      if(!isNaN(a)) { annualSum+=a; annualCount++; }
-    });
-    const annualAvg = annualCount ? (annualSum/annualCount).toFixed(2) : '—';
-    // أعلى وأدنى نقطة (عبر كل الثلاثيات)
-    let allNotes = [];
-    students.forEach(s => {
-      for(let t=1; t<=3; t++) {
-        let m = parseFloat(moyenne(s.id, t, c.id));
-        if(!isNaN(m)) allNotes.push(m);
-      }
-    });
-    const maxNote = allNotes.length ? Math.max(...allNotes).toFixed(2) : '—';
-    const minNote = allNotes.length ? Math.min(...allNotes).toFixed(2) : '—';
-    stats.push({
-      name: c.name,
-      count: students.length,
-      t1: trimAvgs[0],
-      t2: trimAvgs[1],
-      t3: trimAvgs[2],
-      annual: annualAvg,
-      max: maxNote,
-      min: minNote
-    });
-  }
-  // تعبئة الجدول
-  const tbody = document.getElementById('compare-tbody');
-  tbody.innerHTML = stats.map(s => `
-    <tr>
-      <td>${s.name}</td>
-      <td>${s.count}</td>
-      <td>${s.t1}</td>
-      <td>${s.t2}</td>
-      <td>${s.t3}</td>
-      <td>${s.annual}</td>
-      <td>${s.max}</td>
-      <td>${s.min}</td>
-    </tr>
-  `).join('');
-  // رسم بياني (أعمدة) للمعدل السنوي
-  const chartDiv = document.getElementById('compare-chart');
-  const maxAnnual = Math.max(...stats.map(s => parseFloat(s.annual) || 0), 0.1);
-  chartDiv.innerHTML = stats.map(s => {
-    let val = parseFloat(s.annual);
-    let height = val ? (val / maxAnnual) * 100 : 0;
-    return `<div style="text-align:center"><div class="compare-bar" style="height:${Math.max(height, 20)}px">${s.annual}</div><div>${s.name}</div></div>`;
-  }).join('');
-}
-
-// -------------- جدول الاختبارات --------------
-function loadExamClassSelect() {
-  const sel = document.getElementById('exam-class');
-  const classes = getClasses();
-  sel.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  if(currentClassId) sel.value = currentClassId;
-}
-
-function getExams() {
-  const yd = getYearData();
-  if(!yd.exams) yd.exams = [];
-  return yd.exams;
-}
-
-function addExam() {
-  const type = document.getElementById('exam-type').value;
-  const subject = document.getElementById('exam-subject').value.trim();
-  const date = document.getElementById('exam-date').value;
-  const time = document.getElementById('exam-time').value;
-  const classId = document.getElementById('exam-class').value;
-  if(!subject || !date) { alert('أكمل البيانات (المادة والتاريخ)'); return; }
-  const exams = getExams();
-  exams.push({ id: Date.now(), type, subject, date, time, classId });
-  saveAll();
-  renderExams();
-  // تفريغ الحقول
-  document.getElementById('exam-subject').value = '';
-  document.getElementById('exam-date').value = '';
-  document.getElementById('exam-time').value = '';
-}
-
-function deleteExam(id) {
-  const exams = getExams();
-  const idx = exams.findIndex(e => e.id == id);
-  if(idx !== -1) exams.splice(idx, 1);
-  saveAll();
-  renderExams();
-}
-
-function renderExams() {
-  const exams = getExams();
-  const container = document.getElementById('exam-list');
-  const empty = document.getElementById('exam-empty');
-  if(!exams.length) { container.innerHTML = ''; empty.style.display = 'block'; return; }
-  empty.style.display = 'none';
-  const now = new Date();
-  const soonThreshold = new Date(); soonThreshold.setDate(now.getDate() + 3);
-  const classMap = {};
-  getClasses().forEach(c => classMap[c.id] = c.name);
-  let alertMessages = [];
-  const sorted = [...exams].sort((a,b) => a.date.localeCompare(b.date));
-  container.innerHTML = sorted.map(e => {
-    const examDate = new Date(e.date + 'T' + (e.time || '00:00'));
-    const diffDays = Math.ceil((examDate - now) / (1000*3600*24));
-    let warnClass = '';
-    if(examDate < now) warnClass = 'exam-warning';
-    else if(diffDays <= 3) warnClass = 'exam-soon';
-    if(diffDays >= 0 && diffDays <= 3 && examDate >= now) {
-      alertMessages.push(`⚠️ اختبار قريب: ${e.subject} (${classMap[e.classId] || e.classId}) يوم ${e.date} ${e.time || ''}`);
-    }
-    return `
-      <div class="exam-item ${warnClass}">
-        <div>
-          <span class="exam-date">${e.date} ${e.time || ''}</span> — 
-          <strong>${e.type === 'fardh' ? 'فرض' : 'تاليفي'}</strong> ${e.subject} — 
-          قسم ${classMap[e.classId] || e.classId}
-        </div>
-        <button class="btn-outline btn-sm" onclick="deleteExam(${e.id})" style="margin-top:5px">🗑️ حذف</button>
-      </div>
-    `;
-  }).join('');
-  const alertDiv = document.getElementById('exam-alert');
-  if(alertMessages.length) {
-    alertDiv.style.display = 'block';
-    alertDiv.innerHTML = alertMessages.join('<br>');
-  } else {
-    alertDiv.style.display = 'none';
-  }
-}
-
-// ======================= إنهاء الكود والتشغيل =======================
-window.addEventListener('beforeunload',function(){if(unsaved){flushPending();saveAll();}});
-applyTheme();
-initAbsenceYears();
-initSchoolYears();
-initClasses();
-updateLastEdit();
-document.getElementById('absence-date').value = new Date().toISOString().split('T')[0];
 </script>
 
-<!-- المودالات المفقودة (تم نقلها من الكود الأصلي) -->
-<div class="modal-overlay" id="import-modal">
-  <div class="modal">
-    <div class="modal-title">📋 إضافة قائمة التلاميذ</div>
-    <textarea id="paste-area" rows="9" placeholder="أحمد بن علي&#10;مريم الطرابلسي&#10;..." style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:10px;border-radius:9px;outline:none;resize:vertical;line-height:1.9;margin-bottom:10px"></textarea>
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="btn btn-gold" onclick="parsePaste()">✅ معالجة</button>
-      <button class="btn btn-danger btn-sm" onclick="closeModal('import-modal')">إلغاء</button>
+<!-- GIST SETTINGS MODAL -->
+<div class="modal-overlay" id="gist-settings-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">⚙️ إعدادات GitHub Gist</div>
+    <div class="gist-modal-note">
+      <strong>كيفاش تحضّر Gist Token:</strong><br>
+      1. روح على <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a><br>
+      2. اختار صلاحية <strong>gist</strong> بس<br>
+      3. انسخ التوكن وحطّو هنا ⬇️<br>
+      <span style="color:var(--orange)">⚠️ التوكن يتحفظ محلياً في المتصفح فقط</span>
     </div>
-    <div id="import-result" style="display:none">
-      <div style="color:var(--text2);margin-bottom:7px;font-size:0.82rem">✏️ راجع وعدّل:</div>
-      <div id="names-list" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap">
-        <button class="btn btn-gold" onclick="confirmImport()">✅ إضافة</button>
-        <button class="btn btn-outline btn-sm" onclick="addNameRow()">+ اسم</button>
-        <button class="btn btn-danger btn-sm" onclick="closeModal('import-modal')">إلغاء</button>
-      </div>
+    <div class="form-group" style="margin-bottom:11px">
+      <label>🔑 GitHub Personal Access Token</label>
+      <input type="password" id="gist-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="font-family:monospace;font-size:0.85rem"/>
     </div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="edit-all-modal">
-  <div class="modal">
-    <div class="modal-title">✏️ تعديل قائمة التلاميذ</div>
-    <div id="edit-all-list" style="max-height:55vh;overflow-y:auto;margin-bottom:14px"></div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn btn-gold" onclick="confirmEditAll()">✅ حفظ التعديلات</button>
-      <button class="btn btn-danger btn-sm" onclick="closeModal('edit-all-modal')">إلغاء</button>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>📎 Gist ID <span style="color:var(--text2);font-weight:400">(اتركه فارغ لإنشاء Gist جديد)</span></label>
+      <input type="text" id="gist-id-input" placeholder="e.g. a1b2c3d4e5f6..." style="font-family:monospace;font-size:0.85rem"/>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="saveGistSettings()">💾 حفظ</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('gist-settings-modal')">إلغاء</button>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="export-modal">
-  <div class="modal">
-    <div class="modal-title">📄 تصدير — اختر الفترة</div>
-    <div class="trim-select-row">
-      <div class="trim-sel-btn selected" data-trim="1" onclick="selectExportTrim(this)">📘 الثلاثي الأول</div>
-      <div class="trim-sel-btn" data-trim="2" onclick="selectExportTrim(this)">📗 الثلاثي الثاني</div>
-      <div class="trim-sel-btn" data-trim="3" onclick="selectExportTrim(this)">📙 الثلاثي الثالث</div>
-      <div class="trim-sel-btn" data-trim="0" onclick="selectExportTrim(this)">📊 السنة كاملة</div>
-    </div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn btn-green" onclick="doExportWord()">📄 تصدير</button>
-      <button class="btn btn-danger btn-sm" onclick="closeModal('export-modal')">إلغاء</button>
-    </div>
-  </div>
-</div>
+<script>
+// ══════════════════════════════════════
+//  PWA — MANIFEST + ICON (inline)
+// ══════════════════════════════════════
+(function(){
+  // SVG icon as base64 data URL
+  const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="100" fill="#182030"/>
+    <rect x="30" y="30" width="452" height="452" rx="80" fill="#1e2840"/>
+    <rect x="30" y="30" width="452" height="12" rx="6" fill="#f0a830"/>
+    <text x="256" y="220" font-family="serif" font-size="140" font-weight="bold" fill="#f0a830" text-anchor="middle" dominant-baseline="middle">م</text>
+    <text x="256" y="340" font-family="serif" font-size="52" fill="#ffc84a" text-anchor="middle" opacity="0.9">مساعد الأستاذ</text>
+    <rect x="80" y="390" width="352" height="3" rx="2" fill="#f0a83055"/>
+    <text x="256" y="440" font-family="serif" font-size="30" fill="#7a8fa8" text-anchor="middle">متابعة التلاميذ</text>
+  </svg>`;
+  const b64 = btoa(unescape(encodeURIComponent(svgIcon)));
+  const iconUrl = 'data:image/svg+xml;base64,' + b64;
 
+  // Apple touch icon
+  const appleIcon = document.getElementById('pwa-apple-icon');
+  if(appleIcon) appleIcon.href = iconUrl;
+
+  // Manifest
+  const manifest = {
+    name: 'مساعد الأستاذ',
+    short_name: 'مساعد الأستاذ',
+    description: 'تطبيق متابعة التلاميذ والأعداد',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#0e1621',
+    theme_color: '#f0a830',
+    dir: 'rtl',
+    lang: 'ar',
+    icons: [
+      { src: iconUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+      { src: iconUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  const mUrl = URL.createObjectURL(blob);
+  const mEl = document.getElementById('pwa-manifest');
+  if(mEl) mEl.href = mUrl;
+
+  // Minimal service worker for offline caching
+  if('serviceWorker' in navigator){
+    const swCode = `
+const CACHE = 'assistant-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', location.href])));
+  self.skipWaiting();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./'))));
+});
+    `;
+    const swBlob = new Blob([swCode], {type:'text/javascript'});
+    const swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl, {scope:'./'}).catch(()=>{});
+  }
+})();
+
+// ══════════════════════════════════════
+//  GITHUB GIST SYNC
+// ══════════════════════════════════════
+function getGistToken(){ return localStorage.getItem('gist_token')||''; }
+function getGistId(){ return localStorage.getItem('gist_id')||''; }
+
+function openGistSettings(){
+  document.getElementById('gist-token-input').value = getGistToken();
+  document.getElementById('gist-id-input').value = getGistId();
+  document.getElementById('gist-settings-modal').classList.add('open');
+}
+
+function saveGistSettings(){
+  const token = document.getElementById('gist-token-input').value.trim();
+  const id = document.getElementById('gist-id-input').value.trim();
+  if(!token){ alert('حط التوكن أولاً!'); return; }
+  localStorage.setItem('gist_token', token);
+  if(id) localStorage.setItem('gist_id', id);
+  else localStorage.removeItem('gist_id');
+  closeModal('gist-settings-modal');
+  setSyncStatus('✅ تم حفظ الإعدادات', 'ok');
+}
+
+function setSyncStatus(msg, type=''){
+  const el = document.getElementById('sync-status-msg');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'sync-status ' + type;
+  if(msg) setTimeout(()=>{ el.textContent=''; el.className='sync-status'; }, 4000);
+}
+
+function setBtnSyncing(id, syncing){
+  const btn = document.getElementById(id);
+  if(!btn) return;
+  btn.classList.toggle('syncing', syncing);
+  if(syncing){
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = '<span class="spin">⏳</span> جاري...';
+  } else {
+    if(btn._orig) btn.innerHTML = btn._orig;
+  }
+}
+
+async function gistUpload(){
+  const token = getGistToken();
+  if(!token){ openGistSettings(); setSyncStatus('⚠️ حط التوكن أولاً', 'err'); return; }
+  flushPending(); saveAll();
+  const payload = JSON.stringify({allData, exportDate: new Date().toISOString()}, null, 2);
+  const gistId = getGistId();
+  setBtnSyncing('gist-upload-btn', true);
+  setSyncStatus('جاري الرفع...');
+  try {
+    const body = {
+      description: 'مساعد الأستاذ — نسخة احتياطية ' + new Date().toLocaleDateString('ar-TN'),
+      public: false,
+      files: { 'assistant_professeur_backup.json': { content: payload } }
+    };
+    let url = 'https://api.github.com/gists';
+    let method = 'POST';
+    if(gistId){ url += '/' + gistId; method = 'PATCH'; }
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){ const e = await res.json(); throw new Error(e.message||res.status); }
+    const data = await res.json();
+    if(!gistId){ localStorage.setItem('gist_id', data.id); }
+    const now = new Date().toLocaleTimeString('ar-TN', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('✅ تم الرفع ' + now, 'ok');
+  } catch(err){
+    setSyncStatus('❌ خطأ: ' + err.message, 'err');
+  } finally {
+    setBtnSyncing('gist-upload-btn', false);
+  }
+}
+
+async function gistDownload(){
+  const token = getGistToken();
+  const gistId = getGistId();
+  if(!token){ openGistSettings(); setSyncStatus('⚠️ حط التوكن أولاً', 'err'); return; }
+  if(!gistId){ setSyncStatus('⚠️ ما عندكش Gist ID — ارفع أولاً', 'err'); return; }
+  setBtnSyncing('gist-download-btn', true);
+  setSyncStatus('جاري التحميل...');
+  try {
+    const res = await fetch('https://api.github.com/gists/' + gistId, {
+      headers: { Authorization: 'token ' + token }
+    });
+    if(!res.ok){ const e = await res.json(); throw new Error(e.message||res.status); }
+    const data = await res.json();
+    const file = data.files['assistant_professeur_backup.json'];
+    if(!file) throw new Error('الملف ما لقيناهوش في Gist');
+    const content = file.content || await (await fetch(file.raw_url)).text();
+    const parsed = JSON.parse(content);
+    if(!parsed.allData) throw new Error('بيانات غير صحيحة');
+    if(!confirm('باش تتعوّض البيانات المحلية ببيانات Gist. تأكد؟')) { setBtnSyncing('gist-download-btn', false); setSyncStatus(''); return; }
+    allData = parsed.allData;
+    saveAll();
+    initSchoolYears();
+    initClasses();
+    const now = new Date().toLocaleTimeString('ar-TN', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('✅ تم التحميل ' + now, 'ok');
+  } catch(err){
+    setSyncStatus('❌ خطأ: ' + err.message, 'err');
+  } finally {
+    setBtnSyncing('gist-download-btn', false);
+  }
+}
+</script>
+
+<!-- TRANSFER MODAL -->
 <div class="modal-overlay" id="transfer-modal">
   <div class="modal" style="max-width:420px">
     <div class="modal-title">🔄 نقل أعداد بين الثلاثيات</div>
