@@ -1519,21 +1519,11 @@ function exportRapportWord(){
   const mEl = document.getElementById('pwa-manifest');
   if(mEl) mEl.href = mUrl;
 
-  // Minimal service worker for offline caching
+  // Service Worker — يحتاج ملف sw.js على نفس الـ repo
   if('serviceWorker' in navigator){
-    const swCode = `
-const CACHE = 'assistant-v1';
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', location.href])));
-  self.skipWaiting();
-});
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./'))));
-});
-    `;
-    const swBlob = new Blob([swCode], {type:'text/javascript'});
-    const swUrl = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl, {scope:'./'}).catch(()=>{});
+    navigator.serviceWorker.register('./sw.js', {scope:'./'})
+      .then(reg => console.log('SW registered:', reg.scope))
+      .catch(err => console.log('SW not found (normal for local):', err.message));
   }
 })();
 
