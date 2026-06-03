@@ -1458,7 +1458,11 @@ function exportRapportWord(){
     </div>
     <div class="form-group" style="margin-bottom:11px">
       <label>🔑 GitHub Personal Access Token</label>
-      <input type="password" id="gist-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="font-family:monospace;font-size:0.85rem"/>
+      <div style="position:relative;display:flex;gap:6px;align-items:center">
+        <input type="password" id="gist-token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="font-family:monospace;font-size:0.85rem;flex:1" oninput="updateTokenPreview()"/>
+        <button type="button" onclick="toggleTokenVisibility()" id="token-eye-btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;font-size:0.85rem;">👁️</button>
+      </div>
+      <div id="token-preview" style="font-size:0.72rem;color:var(--text2);margin-top:4px;font-family:monospace;min-height:16px;"></div>
     </div>
     <div class="form-group" style="margin-bottom:14px">
       <label>📎 Gist ID <span style="color:var(--text2);font-weight:400">(اتركه فارغ لإنشاء Gist جديد)</span></label>
@@ -1543,6 +1547,7 @@ function openGistSettings(){
   document.getElementById('gist-token-input').value = getGistToken();
   document.getElementById('gist-id-input').value = getGistId();
   document.getElementById('gist-settings-modal').classList.add('open');
+  setTimeout(updateTokenPreview, 50);
 }
 
 function clearGistId(){
@@ -1551,15 +1556,42 @@ function clearGistId(){
   setSyncStatus('🗑️ تم مسح الـ Gist ID — الرفع القادم يخلق Gist جديد', 'ok');
 }
 
+function toggleTokenVisibility(){
+  const inp = document.getElementById('gist-token-input');
+  const btn = document.getElementById('token-eye-btn');
+  if(inp.type === 'password'){ inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function updateTokenPreview(){
+  const val = document.getElementById('gist-token-input').value;
+  const preview = document.getElementById('token-preview');
+  if(!preview) return;
+  if(!val){ preview.textContent = ''; return; }
+  const trimmed = val.trim();
+  const diff = val.length - trimmed.length;
+  let msg = '✅ ' + trimmed.length + ' حرف';
+  if(trimmed.startsWith('ghp_')) msg += ' · classic token ✓';
+  else if(trimmed.startsWith('github_pat_')) msg += ' · fine-grained token ✓';
+  else msg += ' · ⚠️ صيغة غير معروفة';
+  if(diff > 0) msg += ' · ⚠️ فيه ' + diff + ' مسافة زائدة';
+  preview.textContent = msg;
+  preview.style.color = diff > 0 ? 'var(--orange)' : 'var(--green)';
+}
+
 function saveGistSettings(){
-  const token = document.getElementById('gist-token-input').value.trim();
+  const raw = document.getElementById('gist-token-input').value;
+  const token = raw.trim().replace(/[\u200b-\u200f\ufeff]/g, ''); // مسح أحرف Unicode الخفية
   const id = document.getElementById('gist-id-input').value.trim();
   if(!token){ alert('حط التوكن أولاً!'); return; }
+  if(!token.startsWith('ghp_') && !token.startsWith('github_pat_')){
+    if(!confirm('التوكن ما يبدأش بـ ghp_ — متأكد أنه صحيح؟')) return;
+  }
   localStorage.setItem('gist_token', token);
   if(id) localStorage.setItem('gist_id', id);
   else localStorage.removeItem('gist_id');
   closeModal('gist-settings-modal');
-  setSyncStatus('✅ تم حفظ الإعدادات', 'ok');
+  setSyncStatus('✅ تم حفظ التوكن (' + token.substring(0,8) + '...)', 'ok');
 }
 
 function setSyncStatus(msg, type=''){
@@ -1590,38 +1622,43 @@ async function gistUpload(){
   const gistId = getGistId();
   setBtnSyncing('gist-upload-btn', true);
   setSyncStatus('جاري الرفع...');
+  const bodyStr = JSON.stringify({
+    description: 'مساعد الأستاذ — نسخة احتياطية ' + new Date().toLocaleDateString('ar-TN'),
+    public: false,
+    files: { 'assistant_professeur_backup.json': { content: payload } }
+  });
+  const url = gistId ? 'https://api.github.com/gists/' + gistId : 'https://api.github.com/gists';
+  const method = gistId ? 'PATCH' : 'POST';
   try {
-    const body = {
-      description: 'مساعد الأستاذ — نسخة احتياطية ' + new Date().toLocaleDateString('ar-TN'),
-      public: false,
-      files: { 'assistant_professeur_backup.json': { content: payload } }
-    };
-    let url = 'https://api.github.com/gists';
-    let method = 'POST';
-    if(gistId){ url += '/' + gistId; method = 'PATCH'; }
-    const authHeader = token.startsWith('ghp_') || token.startsWith('github_pat_') || token.startsWith('gho_')
-      ? 'Bearer ' + token
-      : 'token ' + token;
-    const res = await fetch(url, {
-      method,
-      headers: { Authorization: authHeader, 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2022-11-28' },
-      body: JSON.stringify(body)
+    const result = await new Promise(function(resolve, reject){
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, url, true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token.trim());
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('Accept', 'application/vnd.github+json');
+      xhr.timeout = 20000;
+      xhr.onload = function(){
+        if(xhr.status >= 200 && xhr.status < 300){
+          try { resolve(JSON.parse(xhr.responseText)); } catch(e){ resolve({}); }
+        } else {
+          let msg = 'HTTP ' + xhr.status;
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e){}
+          if(xhr.status===0) msg = 'CORS / شبكة — جرب من GitHub Pages';
+          if(xhr.status===401) msg = 'توكن غلط أو منتهي (401)';
+          if(xhr.status===403) msg = 'صلاحية gist ناقصة (403)';
+          if(xhr.status===422) msg = 'Gist ID غلط — امسحو (422)';
+          reject(new Error(msg));
+        }
+      };
+      xhr.onerror = function(){ reject(new Error('فشل الاتصال — CORS أو شبكة')); };
+      xhr.ontimeout = function(){ reject(new Error('timeout — الاتصال بطيء')); };
+      xhr.send(bodyStr);
     });
-    if(!res.ok){
-      let msg = 'HTTP ' + res.status;
-      try { const e = await res.json(); msg = e.message || msg; } catch(e){}
-      if(res.status===401) msg = 'توكن غير صحيح أو منتهي الصلاحية (401)';
-      if(res.status===403) msg = 'صلاحية gist ناقصة في التوكن (403)';
-      if(res.status===422) msg = 'Gist ID غلط — امسحو من الإعدادات (422)';
-      throw new Error(msg);
-    }
-    const data = await res.json();
-    if(!gistId){ localStorage.setItem('gist_id', data.id); }
+    if(!gistId && result.id){ localStorage.setItem('gist_id', result.id); }
     const now = new Date().toLocaleTimeString('ar-TN', {hour:'2-digit', minute:'2-digit'});
     setSyncStatus('✅ تم الرفع ' + now, 'ok');
   } catch(err){
-    if(err.message==='Failed to fetch') setSyncStatus('❌ مشكلة اتصال — تأكد من الإنترنت', 'err');
-    else setSyncStatus('❌ ' + err.message, 'err');
+    setSyncStatus('❌ ' + err.message, 'err');
   } finally {
     setBtnSyncing('gist-upload-btn', false);
   }
@@ -1635,33 +1672,52 @@ async function gistDownload(){
   setBtnSyncing('gist-download-btn', true);
   setSyncStatus('جاري التحميل...');
   try {
-    const authHeader = token.startsWith('ghp_') || token.startsWith('github_pat_') || token.startsWith('gho_')
-      ? 'Bearer ' + token : 'token ' + token;
-    const res = await fetch('https://api.github.com/gists/' + gistId, {
-      headers: { Authorization: authHeader, 'X-GitHub-Api-Version': '2022-11-28' }
+    const data = await new Promise(function(resolve, reject){
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://api.github.com/gists/' + gistId.trim(), true);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token.trim());
+      xhr.setRequestHeader('Accept', 'application/vnd.github+json');
+      xhr.timeout = 20000;
+      xhr.onload = function(){
+        if(xhr.status >= 200 && xhr.status < 300){
+          try { resolve(JSON.parse(xhr.responseText)); } catch(e){ reject(new Error('خطأ في تحليل البيانات')); }
+        } else {
+          let msg = 'HTTP ' + xhr.status;
+          try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e){}
+          if(xhr.status===0) msg = 'CORS / شبكة';
+          if(xhr.status===401) msg = 'توكن غلط (401)';
+          if(xhr.status===404) msg = 'Gist ID غلط أو محذوف (404)';
+          reject(new Error(msg));
+        }
+      };
+      xhr.onerror = function(){ reject(new Error('فشل الاتصال')); };
+      xhr.ontimeout = function(){ reject(new Error('timeout')); };
+      xhr.send();
     });
-    if(!res.ok){
-      let msg = 'HTTP ' + res.status;
-      try { const e = await res.json(); msg = e.message || msg; } catch(e){}
-      if(res.status===401) msg = 'توكن غير صحيح (401)';
-      if(res.status===404) msg = 'Gist ID غلط أو محذوف (404)';
-      throw new Error(msg);
-    }
-    const data = await res.json();
-    const file = data.files['assistant_professeur_backup.json'];
+    const file = data.files && data.files['assistant_professeur_backup.json'];
     if(!file) throw new Error('الملف ما لقيناهوش في Gist');
-    const content = file.content || await (await fetch(file.raw_url)).text();
+    let content = file.content;
+    if(!content && file.raw_url){
+      content = await new Promise(function(resolve, reject){
+        const xhr2 = new XMLHttpRequest();
+        xhr2.open('GET', file.raw_url, true);
+        xhr2.timeout = 15000;
+        xhr2.onload = function(){ resolve(xhr2.responseText); };
+        xhr2.onerror = function(){ reject(new Error('فشل تحميل المحتوى')); };
+        xhr2.send();
+      });
+    }
     const parsed = JSON.parse(content);
     if(!parsed.allData) throw new Error('بيانات غير صحيحة');
-    if(!confirm('باش تتعوّض البيانات المحلية ببيانات Gist. تأكد؟')) { setBtnSyncing('gist-download-btn', false); setSyncStatus(''); return; }
+    if(!confirm('باش تتعوّض البيانات المحلية ببيانات Gist. تأكد؟')){
+      setBtnSyncing('gist-download-btn', false); setSyncStatus(''); return;
+    }
     allData = parsed.allData;
-    saveAll();
-    initSchoolYears();
-    initClasses();
+    saveAll(); initSchoolYears(); initClasses();
     const now = new Date().toLocaleTimeString('ar-TN', {hour:'2-digit', minute:'2-digit'});
     setSyncStatus('✅ تم التحميل ' + now, 'ok');
   } catch(err){
-    setSyncStatus('❌ خطأ: ' + err.message, 'err');
+    setSyncStatus('❌ ' + err.message, 'err');
   } finally {
     setBtnSyncing('gist-download-btn', false);
   }
