@@ -1,27 +1,26 @@
 {
   "name": "مساعد الأستاذ",
   "short_name": "مساعد الأستاذ",
-  "description": "تطبيق متابعة التلاميذ والأعداد",
+  "description": "تطبيق متابعة الأقسام والنقاط للأستاذ",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0e1621",
+  "orientation": "portrait-primary",
+  "background_color": "#0c1118",
   "theme_color": "#f0a830",
   "dir": "rtl",
   "lang": "ar",
   "icons": [
-    {
-      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzE4MjAzMCIvPjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSI0NTIiIHJ4PSI4MCIgZmlsbD0iIzFlMjg0MCIvPjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSIxMiIgcng9IjYiIGZpbGw9IiNmMGE4MzAiLz48dGV4dCB4PSIyNTYiIHk9IjI0MCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjIwMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNmMGE4MzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPtmFPC90ZXh0PjxyZWN0IHg9IjgwIiB5PSI0MDAiIHdpZHRoPSIzNTIiIGhlaWdodD0iMyIgcng9IjIiIGZpbGw9IiNmMGE4MzA1NSIvPjx0ZXh0IHg9IjI1NiIgeT0iNDUwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMzYiIGZpbGw9IiM3YThmYTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPtmF2LPYp9i52K8g2KfZhNij2LPYqtin2LA8L3RleHQ+PC9zdmc+",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjEwMCIgZmlsbD0iIzE4MjAzMCIvPjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSI0NTIiIHJ4PSI4MCIgZmlsbD0iIzFlMjg0MCIvPjxyZWN0IHg9IjMwIiB5PSIzMCIgd2lkdGg9IjQ1MiIgaGVpZ2h0PSIxMiIgcng9IjYiIGZpbGw9IiNmMGE4MzAiLz48dGV4dCB4PSIyNTYiIHk9IjI0MCIgZm9udC1mYW1pbHk9InNlcmlmIiBmb250LXNpemU9IjIwMCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNmMGE4MzAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiPtmFPC90ZXh0PjxyZWN0IHg9IjgwIiB5PSI0MDAiIHdpZHRoPSIzNTIiIGhlaWdodD0iMyIgcng9IjIiIGZpbGw9IiNmMGE4MzA1NSIvPjx0ZXh0IHg9IjI1NiIgeT0iNDUwIiBmb250LWZhbWlseT0ic2VyaWYiIGZvbnQtc2l6ZT0iMzYiIGZpbGw9IiM3YThmYTgiIHRleHQtYW5jaG9yPSJtaWRkbGUiPtmF2LPYp9i52K8g2KfZhNij2LPYqtin2LA8L3RleHQ+PC9zdmc+",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
+    { "src": "icons/icon-48.png", "sizes": "48x48", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-72.png", "sizes": "72x72", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-96.png", "sizes": "96x96", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

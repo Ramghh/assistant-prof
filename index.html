@@ -10,7 +10,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="مساعد الأستاذ"/>
-<link rel="apple-touch-icon" id="pwa-apple-icon"/>
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png"/>
+<link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png"/>
+<link rel="shortcut icon" href="./icons/favicon.ico"/>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
@@ -1561,20 +1564,10 @@ function exportRapportWord(){
 
 <script>
 // ══════════════════════════════════════
-//  PWA — MANIFEST + ICON (inline)
+//  PWA — SERVICE WORKER
 // ══════════════════════════════════════
 (function(){
-  // SVG icon — embedded directly as data: URL
-  const svgIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#182030"/><rect x="30" y="30" width="452" height="452" rx="80" fill="#1e2840"/><rect x="30" y="30" width="452" height="12" rx="6" fill="#f0a830"/><text x="256" y="240" font-family="serif" font-size="200" font-weight="bold" fill="#f0a830" text-anchor="middle" dominant-baseline="middle">&#x645;</text><rect x="80" y="400" width="352" height="3" rx="2" fill="#f0a83055"/><text x="256" y="450" font-family="serif" font-size="36" fill="#7a8fa8" text-anchor="middle">&#x645;&#x633;&#x627;&#x639;&#x62f; &#x627;&#x644;&#x623;&#x633;&#x62a;&#x627;&#x630;</text></svg>';
-  const iconB64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgIcon)));
-
-  // Apple touch icon
-  const appleIcon = document.getElementById('pwa-apple-icon');
-  if(appleIcon) appleIcon.href = iconB64;
-
-  // Manifest: ملف manifest.json حقيقي على نفس الـ repo
-
-  // Service Worker
+  // Icons are now real static PNG files in /icons (see manifest.json + <head> links)
   if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js', {scope:'./'})
       .then(reg => console.log('SW registered:', reg.scope))
