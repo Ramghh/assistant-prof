@@ -12,6 +12,9 @@
 <meta name="apple-mobile-web-app-title" content="مساعد الأستاذ"/>
 <link rel="apple-touch-icon" id="pwa-apple-icon"/>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <style>
 /* ══ DARK THEME ══ */
 :root {
@@ -237,9 +240,83 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
 .gist-modal-note{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:0.8rem;color:var(--text2);margin-bottom:12px;line-height:1.7;}
 .gist-modal-note a{color:#5a9fd4;text-decoration:none;}
 .gist-modal-note a:hover{text-decoration:underline;}
+
+/* ══ AUTH SCREEN ══ */
+#auth-screen{position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
+.auth-box{width:100%;max-width:380px;background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:var(--shadow);}
+.auth-logo{text-align:center;font-size:2.2rem;margin-bottom:6px;}
+.auth-title{text-align:center;font-size:1.3rem;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif;margin-bottom:4px;}
+.auth-sub{text-align:center;font-size:0.82rem;color:var(--text2);margin-bottom:20px;}
+.auth-field{margin-bottom:13px;}
+.auth-field label{display:block;color:var(--text2);font-size:0.8rem;margin-bottom:4px;}
+.auth-field input{width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:10px 12px;border-radius:9px;outline:none;transition:border 0.2s;direction:ltr;text-align:right;}
+.auth-field input:focus{border-color:var(--gold);}
+.auth-error{display:none;background:#3a1010;border:1px solid var(--red)44;color:var(--red);font-size:0.82rem;padding:9px 12px;border-radius:8px;margin-bottom:13px;text-align:center;line-height:1.6;}
+body.light .auth-error{background:#ffe0dc;border-color:#c0302044;}
+.auth-error.show{display:block;}
+.auth-info{display:none;background:#1a3d2a;border:1px solid var(--green)44;color:var(--green);font-size:0.82rem;padding:9px 12px;border-radius:8px;margin-bottom:13px;text-align:center;line-height:1.6;}
+body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
+.auth-info.show{display:block;}
+.auth-switch{text-align:center;font-size:0.85rem;color:var(--text2);margin-top:16px;}
+.auth-switch a{color:var(--gold);cursor:pointer;text-decoration:none;font-weight:700;}
+.auth-switch a:hover{text-decoration:underline;}
+.auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
+.auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
+.auth-forgot a:hover{text-decoration:underline;}
+.auth-loading{display:none;text-align:center;padding:40px 20px;}
+.auth-loading.show{display:block;}
+.auth-spinner{display:inline-block;width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+#app-root{display:none;}
+#app-root.ready{display:block;}
+.user-pill{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:7px;font-size:0.82rem;}
+.user-pill-email{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
+.user-pill-logout{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;font-weight:700;padding:2px 4px;}
 </style>
 </head>
 <body>
+
+<!-- ══ AUTH SCREEN ══ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div id="auth-loading" class="auth-loading show">
+      <div class="auth-spinner"></div>
+    </div>
+    <div id="auth-forms" style="display:none">
+      <div class="auth-logo">📚</div>
+      <div class="auth-title">مساعد الأستاذ</div>
+      <div class="auth-sub" id="auth-mode-sub">سجل الدخول لمتابعة عملك</div>
+
+      <div class="auth-error" id="auth-error"></div>
+      <div class="auth-info" id="auth-info"></div>
+
+      <div class="auth-field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="auth-email" autocomplete="username" placeholder="example@email.com"/>
+      </div>
+      <div class="auth-field" id="auth-pass-field">
+        <label>كلمة السر</label>
+        <input type="password" id="auth-password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuthForm()"/>
+      </div>
+      <div class="auth-field" id="auth-pass2-field" style="display:none">
+        <label>تأكيد كلمة السر</label>
+        <input type="password" id="auth-password2" autocomplete="new-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')submitAuthForm()"/>
+      </div>
+
+      <button class="btn btn-gold btn-full" id="auth-submit-btn" onclick="submitAuthForm()">دخول</button>
+
+      <div class="auth-forgot" id="auth-forgot-row">
+        <a onclick="forgotPassword()">نسيت كلمة السر؟</a>
+      </div>
+
+      <div class="auth-switch">
+        <span id="auth-switch-text">ما عندكش حساب؟</span>
+        <a id="auth-switch-link" onclick="toggleAuthMode()">سجل حساب جديد</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app-root">
 
 <!-- SIDEBAR OVERLAY -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -310,6 +387,11 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
 
   <!-- ACTIONS -->
   <div class="sidebar-footer">
+    <div class="user-pill">
+      <span class="user-pill-email" id="user-pill-email">—</span>
+      <button class="user-pill-logout" onclick="doLogout()">خروج</button>
+    </div>
+    <div class="sync-status" id="fb-sync-status" style="margin-bottom:6px"></div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px">
       <button class="btn btn-save btn-sm" style="flex:1" onclick="manualSave()">💾 حفظ</button>
       <button class="btn btn-blue btn-sm" style="flex:1" onclick="exportJSON()">⬇️ JSON</button>
@@ -623,6 +705,7 @@ function getSubjectKey(){return 'subject_'+currentSchoolYear+'_'+currentClassId;
 function saveSubjectSettings(){
   const s={name:document.getElementById('subject-name').value,ws:parseFloat(document.getElementById('w-shafahi').value)||1,wf:parseFloat(document.getElementById('w-fardh').value)||1,wt:parseFloat(document.getElementById('w-taliffi').value)||2};
   localStorage.setItem(getSubjectKey(),JSON.stringify(s));updateFormula();
+  if(typeof schedulePush==='function')schedulePush();
 }
 function loadSubjectSettings(){
   const def={name:'إنجليزي',ws:1,wf:1,wt:2};
@@ -789,8 +872,8 @@ function renameClassPrompt(id){
 // ══════════════════════════════════════
 //  TEACHER / INSTITUTION
 // ══════════════════════════════════════
-function saveTeacherName(val){if(currentClassId&&currentSchoolYear)localStorage.setItem('tname_'+currentSchoolYear+'_'+currentClassId,val);}
-function saveInstitution(val){if(currentSchoolYear)localStorage.setItem('institution_'+currentSchoolYear,val);}
+function saveTeacherName(val){if(currentClassId&&currentSchoolYear)localStorage.setItem('tname_'+currentSchoolYear+'_'+currentClassId,val);if(typeof schedulePush==='function')schedulePush();}
+function saveInstitution(val){if(currentSchoolYear)localStorage.setItem('institution_'+currentSchoolYear,val);if(typeof schedulePush==='function')schedulePush();}
 function loadTeacherFields(){
   const ti=document.getElementById('teacher-name');
   const ii=document.getElementById('institution-name');
@@ -1235,13 +1318,13 @@ function importJSON(event){
 // ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
-window.addEventListener('beforeunload',function(){if(unsaved){flushPending();saveAll();}});
+// NOTE: initAbsenceYears/initSchoolYears/initClasses/updateLastEdit are now
+// triggered from the Firebase onAuthStateChanged handler, after user data
+// has been pulled from Firestore (see bottom of file). Calling them here
+// would run them before allData is populated for the logged-in user.
 applyTheme();
-initAbsenceYears();
-initSchoolYears();
-initClasses();
-updateLastEdit();
 document.getElementById('absence-date').value=new Date().toISOString().split('T')[0];
+
 
 // TRANSFER GRADES
 function openTransferModal(){
@@ -1722,5 +1805,242 @@ async function gistDownload(){
 <div style="position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:5px 14px;font-size:0.7rem;color:var(--text2);text-align:center;z-index:10;">
   © Gharbi Ramzi — All rights reserved
 </div>
+
+</div><!-- /#app-root -->
+
+<script>
+// ══════════════════════════════════════
+//  FIREBASE — AUTH + MULTI-TENANT SYNC
+// ══════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyD_q2F3g7VyEDZAtRXuoBMR72_B96FH7Xo",
+  authDomain: "teacher-assistant-aa126.firebaseapp.com",
+  projectId: "teacher-assistant-aa126",
+  storageBucket: "teacher-assistant-aa126.firebasestorage.app",
+  messagingSenderId: "993847178102",
+  appId: "1:993847178102:web:ea18e223dbdb4a52618057"
+};
+firebase.initializeApp(firebaseConfig);
+const fbAuth = firebase.auth();
+const fbDb = firebase.firestore();
+
+let currentUser = null;
+let authMode = 'login'; // 'login' | 'signup'
+let fsLastApplied = 0;   // timestamp of last data we know matches Firestore
+let fsPushTimer = null;
+let fsPushInFlight = false;
+let fsBlockPush = false; // true while pulling, to avoid pushing stale data back
+
+function userDocRef(uid){ return fbDb.collection('teacherAssistantUsers').doc(uid); }
+
+// ── AUTH UI HELPERS ──
+function showAuthError(msg){
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-info').classList.remove('show');
+}
+function showAuthInfo(msg){
+  const el = document.getElementById('auth-info');
+  el.textContent = msg; el.classList.add('show');
+  document.getElementById('auth-error').classList.remove('show');
+}
+function clearAuthMsgs(){
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-info').classList.remove('show');
+}
+function toggleAuthMode(){
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  clearAuthMsgs();
+  const pass2 = document.getElementById('auth-pass2-field');
+  const sub = document.getElementById('auth-mode-sub');
+  const btn = document.getElementById('auth-submit-btn');
+  const switchText = document.getElementById('auth-switch-text');
+  const switchLink = document.getElementById('auth-switch-link');
+  const forgotRow = document.getElementById('auth-forgot-row');
+  if(authMode === 'signup'){
+    pass2.style.display = 'block';
+    sub.textContent = 'أنشئ حساب جديد';
+    btn.textContent = 'إنشاء حساب';
+    switchText.textContent = 'عندك حساب؟';
+    switchLink.textContent = 'سجل الدخول';
+    forgotRow.style.display = 'none';
+  } else {
+    pass2.style.display = 'none';
+    sub.textContent = 'سجل الدخول لمتابعة عملك';
+    btn.textContent = 'دخول';
+    switchText.textContent = 'ما عندكش حساب؟';
+    switchLink.textContent = 'سجل حساب جديد';
+    forgotRow.style.display = 'block';
+  }
+}
+function authErrorMessage(err){
+  const code = err && err.code;
+  const map = {
+    'auth/invalid-email':'بريد إلكتروني غير صحيح',
+    'auth/user-disabled':'هذا الحساب موقوف',
+    'auth/user-not-found':'ما فماش حساب بهذا البريد',
+    'auth/wrong-password':'كلمة السر غلط',
+    'auth/invalid-credential':'البريد أو كلمة السر غلط',
+    'auth/email-already-in-use':'هذا البريد مستعمل من قبل — سجل الدخول',
+    'auth/weak-password':'كلمة السر ضعيفة — لازم 6 خانات على الأقل',
+    'auth/too-many-requests':'محاولات كثيرة — جرب من بعد شوية',
+    'auth/network-request-failed':'مشكلة في الاتصال بالأنترنات'
+  };
+  return map[code] || (err && err.message) || 'صار خطأ — جرب مرة أخرى';
+}
+function submitAuthForm(){
+  clearAuthMsgs();
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  if(!email || !password){ showAuthError('عمر الحقول كل واحد'); return; }
+  const btn = document.getElementById('auth-submit-btn');
+  btn.disabled = true; const origText = btn.textContent; btn.textContent = '⏳ جاري...';
+  const reset = ()=>{ btn.disabled = false; btn.textContent = origText; };
+
+  if(authMode === 'signup'){
+    const password2 = document.getElementById('auth-password2').value;
+    if(password.length < 6){ showAuthError('كلمة السر لازم 6 خانات على الأقل'); reset(); return; }
+    if(password !== password2){ showAuthError('كلمتي السر ما يتطابقوش'); reset(); return; }
+    fbAuth.createUserWithEmailAndPassword(email, password)
+      .catch(err=>{ showAuthError(authErrorMessage(err)); reset(); });
+  } else {
+    fbAuth.signInWithEmailAndPassword(email, password)
+      .catch(err=>{ showAuthError(authErrorMessage(err)); reset(); });
+  }
+}
+function forgotPassword(){
+  clearAuthMsgs();
+  const email = document.getElementById('auth-email').value.trim();
+  if(!email){ showAuthError('حط بريدك الإلكتروني فوق باش نرسلولك رابط الاسترجاع'); return; }
+  fbAuth.sendPasswordResetEmail(email)
+    .then(()=>showAuthInfo('تم إرسال رابط استرجاع كلمة السر لبريدك ✅'))
+    .catch(err=>showAuthError(authErrorMessage(err)));
+}
+function doLogout(){
+  if(unsaved){ flushPending(); saveAll(); }
+  if(!confirm('متأكد باش تخرج من الحساب؟')) return;
+  fbAuth.signOut();
+}
+
+// ── FIRESTORE SYNC ──
+function setFsStatus(msg, kind){
+  const el = document.getElementById('fb-sync-status');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.remove('ok','err');
+  if(kind) el.classList.add(kind);
+}
+
+function schedulePush(){
+  if(!currentUser || fsBlockPush) return;
+  if(fsPushTimer) clearTimeout(fsPushTimer);
+  fsPushTimer = setTimeout(pushToFirestore, 2500);
+}
+
+async function pushToFirestore(){
+  if(!currentUser || fsPushInFlight) return;
+  fsPushInFlight = true;
+  setFsStatus('☁️ جاري الحفظ...');
+  try{
+    flushPending();
+    const settings = collectLocalSettings();
+    const now = Date.now();
+    await userDocRef(currentUser.uid).set({
+      allData: allData,
+      settings: settings,
+      updatedAt: now
+    }, {merge:false});
+    fsLastApplied = now;
+    setFsStatus('✅ متزامن', 'ok');
+  } catch(err){
+    setFsStatus('❌ ' + (err.message||'فشل الحفظ السحابي'), 'err');
+  } finally {
+    fsPushInFlight = false;
+  }
+}
+
+// collect institution_*/tname_*/subject_* keys from localStorage into one object
+function collectLocalSettings(){
+  const out = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && (k.indexOf('institution_')===0 || k.indexOf('tname_')===0 || k.indexOf('subject_')===0)){
+      out[k] = localStorage.getItem(k);
+    }
+  }
+  return out;
+}
+function applyLocalSettings(settings){
+  if(!settings) return;
+  Object.keys(settings).forEach(k=>localStorage.setItem(k, settings[k]));
+}
+
+async function pullFromFirestore(){
+  setFsStatus('☁️ جاري التحميل...');
+  try{
+    const doc = await userDocRef(currentUser.uid).get();
+    if(doc.exists){
+      const data = doc.data();
+      fsBlockPush = true;
+      allData = data.allData || {};
+      applyLocalSettings(data.settings);
+      saveAll();
+      fsLastApplied = data.updatedAt || Date.now();
+      setFsStatus('✅ متزامن', 'ok');
+      fsBlockPush = false;
+    } else {
+      // first time this user logs in — push current local (likely empty) data to create the doc
+      fsBlockPush = false;
+      await pushToFirestore();
+    }
+  } catch(err){
+    fsBlockPush = false;
+    setFsStatus('⚠️ تعذر التحميل من السحابة — نخدمو بالنسخة المحلية', 'err');
+  }
+}
+
+// wrap saveAll to also schedule a cloud push whenever local data is saved
+const _origSaveAll = saveAll;
+saveAll = function(){
+  _origSaveAll();
+  schedulePush();
+};
+
+// ── AUTH STATE ──
+function showAuthScreen(){
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-root').classList.remove('ready');
+}
+function hideAuthScreen(){
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-root').classList.add('ready');
+}
+
+fbAuth.onAuthStateChanged(async function(user){
+  if(user){
+    currentUser = user;
+    document.getElementById('user-pill-email').textContent = user.email || '';
+    document.getElementById('auth-loading').classList.remove('show');
+    document.getElementById('auth-loading').classList.add('show'); // keep spinner while pulling
+    await pullFromFirestore();
+    document.getElementById('auth-loading').classList.remove('show');
+    hideAuthScreen();
+    // re-render whatever is currently visible with the freshly pulled data
+    initSchoolYears(); initClasses(); initAbsenceYears();
+    if(typeof renderAbsence==='function') renderAbsence();
+    updateLastEdit();
+  } else {
+    currentUser = null;
+    document.getElementById('auth-loading').classList.remove('show');
+    document.getElementById('auth-forms').style.display = 'block';
+    showAuthScreen();
+  }
+});
+
+window.addEventListener('beforeunload', function(){
+  if(unsaved && currentUser){ flushPending(); }
+});
+</script>
 </body>
 </html>
+
