@@ -274,9 +274,30 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .user-pill{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:7px;font-size:0.82rem;}
 .user-pill-email{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
 .user-pill-logout{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;font-weight:700;padding:2px 4px;}
+
+/* ══ SPLASH SCREEN ══ */
+#splash-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at 50% 38%,#1c2438 0%,#0a0e15 100%);transition:opacity 0.5s ease,visibility 0.5s ease;}
+#splash-screen.fade-out{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-emblem{width:108px;height:108px;border-radius:26px;background:linear-gradient(160deg,#1c2438,#0e1420);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px #f0a83022,0 12px 36px #00000066;animation:splash-pop 0.7s cubic-bezier(.2,.9,.25,1.15) both;}
+.splash-emblem span{font-family:'Amiri',serif;font-weight:700;font-size:62px;line-height:1;background:linear-gradient(180deg,#ffd166,#dd8f1f);-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:6px;}
+@keyframes splash-pop{0%{transform:scale(0.55);opacity:0;}60%{transform:scale(1.06);opacity:1;}100%{transform:scale(1);opacity:1;}}
+.splash-title{margin-top:22px;font-family:'Playfair Display',serif;font-weight:700;font-size:1.45rem;color:#f3deb0;letter-spacing:0.3px;opacity:0;animation:splash-fade 0.6s ease 0.35s forwards;}
+.splash-sub{margin-top:6px;font-size:0.8rem;color:#7a8aa6;opacity:0;animation:splash-fade 0.6s ease 0.5s forwards;}
+@keyframes splash-fade{to{opacity:1;}}
+.splash-bar-track{margin-top:34px;width:160px;height:4px;border-radius:2px;background:#ffffff14;overflow:hidden;opacity:0;animation:splash-fade 0.6s ease 0.65s forwards;}
+.splash-bar-fill{height:100%;width:0%;border-radius:2px;background:linear-gradient(90deg,#dd8f1f,#ffd166);animation:splash-progress 3.3s ease 0.7s forwards;}
+@keyframes splash-progress{0%{width:0%;}70%{width:88%;}100%{width:100%;}}
 </style>
 </head>
 <body>
+
+<!-- ══ SPLASH SCREEN ══ -->
+<div id="splash-screen">
+  <div class="splash-emblem"><span>م</span></div>
+  <div class="splash-title">مساعد الأستاذ</div>
+  <div class="splash-sub">متابعة الأقسام والنقاط</div>
+  <div class="splash-bar-track"><div class="splash-bar-fill"></div></div>
+</div>
 
 <!-- ══ AUTH SCREEN ══ -->
 <div id="auth-screen">
@@ -823,7 +844,9 @@ function addSchoolYear(){
 function initClasses(){
   const yd=getYearData();
   if(yd&&yd.classes.length===0){yd.classes.push({id:'c1',name:'القسم 1'});yd.classData['c1']={students:[],notes:{},nextId:1};saveAll();}
-  currentClassId=yd&&yd.classes.length?yd.classes[0].id:null;
+  const savedClassId = currentSchoolYear ? localStorage.getItem('lastClass_'+currentSchoolYear) : null;
+  const savedClassValid = yd && savedClassId && yd.classes.some(c=>c.id===savedClassId);
+  currentClassId = savedClassValid ? savedClassId : (yd&&yd.classes.length?yd.classes[0].id:null);
   renderClassList();renderTable();loadTeacherFields();loadSubjectSettings();
   updateHeaderPill();
 }
@@ -848,6 +871,7 @@ function updateHeaderPill(){
 function switchClass(id){
   if(unsaved){flushPending();saveAll();}
   currentClassId=id;renderClassList();renderTable();updateHeaderPill();
+  if(currentSchoolYear)localStorage.setItem('lastClass_'+currentSchoolYear, id);
   if(document.getElementById('page-annual').classList.contains('active'))renderAnnual();
   loadTeacherFields();loadSubjectSettings();
 }
@@ -893,6 +917,7 @@ function showPage(name,btn){
   document.getElementById('page-'+name).classList.add('active');btn.classList.add('active');
   if(name==='annual'){flushPending();renderAnnual();} if(name==='rapport'){renderRapport();}
   if(name==='absence')renderAbsence();
+  localStorage.setItem('lastPage', name);
 }
 function setTrim(n,btn){
   if(unsaved){flushPending();saveAll();}
@@ -901,6 +926,7 @@ function setTrim(n,btn){
   btn.classList.add('active');
   document.getElementById('trim-label').textContent={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'}[n];
   renderTable();
+  localStorage.setItem('lastTrim', String(n));
 }
 
 // ══════════════════════════════════════
@@ -1999,6 +2025,41 @@ saveAll = function(){
   schedulePush();
 };
 
+// ── RESTORE LAST VIEW (page + trimester) ──
+function restoreLastView(){
+  // restore trimester (only affects page-students; harmless if not on that page)
+  const savedTrim = parseInt(localStorage.getItem('lastTrim'),10);
+  if(savedTrim && [1,2,3].includes(savedTrim) && savedTrim !== currentTrim){
+    const trimBtn = document.querySelector('#page-students .trim-tabs .trim-btn:nth-child('+savedTrim+')');
+    if(trimBtn) setTrim(savedTrim, trimBtn);
+  }
+  // restore active page/tab
+  const savedPage = localStorage.getItem('lastPage');
+  const validPages = ['students','annual','rapport','absence'];
+  if(savedPage && validPages.includes(savedPage)){
+    const navBtn = document.querySelector('.nav-btn[onclick*="\''+savedPage+'\'"]');
+    if(navBtn) showPage(savedPage, navBtn);
+  }
+}
+
+// ── SPLASH SCREEN ──
+const SPLASH_MIN_MS = 4000;
+const splashStartTime = Date.now();
+let authStateReady = false;
+
+function hideSplashScreen(){
+  const splash = document.getElementById('splash-screen');
+  if(!splash) return;
+  splash.classList.add('fade-out');
+  setTimeout(()=>{ splash.style.display='none'; }, 550); // match CSS transition duration
+}
+function maybeHideSplash(){
+  if(!authStateReady) return;
+  const elapsed = Date.now() - splashStartTime;
+  const remaining = Math.max(0, SPLASH_MIN_MS - elapsed);
+  setTimeout(hideSplashScreen, remaining);
+}
+
 // ── AUTH STATE ──
 function showAuthScreen(){
   document.getElementById('auth-screen').style.display = 'flex';
@@ -2022,12 +2083,15 @@ fbAuth.onAuthStateChanged(async function(user){
     initSchoolYears(); initClasses(); initAbsenceYears();
     if(typeof renderAbsence==='function') renderAbsence();
     updateLastEdit();
+    restoreLastView();
   } else {
     currentUser = null;
     document.getElementById('auth-loading').classList.remove('show');
     document.getElementById('auth-forms').style.display = 'block';
     showAuthScreen();
   }
+  authStateReady = true;
+  maybeHideSplash();
 });
 
 window.addEventListener('beforeunload', function(){
