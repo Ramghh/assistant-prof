@@ -2022,9 +2022,16 @@ function forgotPassword(){
   clearAuthMsgs();
   const email = document.getElementById('auth-email').value.trim();
   if(!email){ showAuthError('حط بريدك الإلكتروني فوق باش نرسلولك رابط الاسترجاع'); return; }
+  const btn = document.getElementById('auth-submit-btn');
   fbAuth.sendPasswordResetEmail(email)
-    .then(()=>showAuthInfo('تم إرسال رابط استرجاع كلمة السر لبريدك ✅'))
-    .catch(err=>showAuthError(authErrorMessage(err)));
+    .then(()=>{
+      showAuthInfo('تم إرسال رابط استرجاع كلمة السر لبريدك ✅');
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    })
+    .catch(err=>{
+      showAuthError(authErrorMessage(err));
+      if(btn){ btn.disabled=false; btn.textContent='دخول'; }
+    });
 }
 function doLogout(){
   if(unsaved){ flushPending(); saveAll(); }
@@ -2174,6 +2181,9 @@ setTimeout(function(){
 function showAuthScreen(){
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app-root').classList.remove('ready');
+  // always reset submit button state when auth screen shown
+  const btn = document.getElementById('auth-submit-btn');
+  if(btn){ btn.disabled = false; btn.textContent = authMode==='signup'?'إنشاء حساب':'دخول'; }
 }
 function hideAuthScreen(){
   document.getElementById('auth-screen').style.display = 'none';
