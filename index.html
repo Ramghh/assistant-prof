@@ -379,7 +379,24 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
     <div class="sidebar-section-title">المادة والأوزان</div>
     <div class="form-group" style="margin-bottom:8px">
       <label>📖 المادة</label>
-      <input type="text" id="subject-name" placeholder="مثال: إنجليزي" oninput="saveSubjectSettings()"/>
+      <select id="subject-select" onchange="onSubjectSelect()" style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:9px 12px;border-radius:9px;outline:none;direction:rtl;">
+        <optgroup label="مواد بشفاهي (ش×1 + ف×1 + ت×2)">
+          <option value="إنجليزي">إنجليزي</option>
+          <option value="تربية مدنية">تربية مدنية</option>
+          <option value="تربية إسلامية">تربية إسلامية</option>
+          <option value="تاريخ">تاريخ</option>
+          <option value="جغرافيا">جغرافيا</option>
+          <option value="تربية موسيقية">تربية موسيقية</option>
+        </optgroup>
+        <optgroup label="مواد بلا شفاهي (ف×1 + ت×2)">
+          <option value="الإعلامية">الإعلامية</option>
+          <option value="التربية البدنية">التربية البدنية</option>
+        </optgroup>
+        <optgroup label="مادة أخرى">
+          <option value="__custom__">مادة أخرى (يدوي) ✏️</option>
+        </optgroup>
+      </select>
+      <input type="text" id="subject-name-custom" placeholder="اسم المادة..." oninput="saveSubjectSettings()" style="display:none;margin-top:7px;width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:9px 12px;border-radius:9px;outline:none;direction:rtl;"/>
     </div>
     <div class="weight-row">
       <div class="weight-item">شفاهي × <input type="number" id="w-shafahi" min="0" max="10" step="0.5" value="1" oninput="saveSubjectSettings();updateFormula()"/></div>
@@ -481,7 +498,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
             <tr>
               <th>#</th>
               <th style="text-align:right;padding-right:8px">الاسم واللقب</th>
-              <th>الشفاهي</th>
+              <th id="th-shafahi">الشفاهي</th>
               <th>الفرض الأول</th>
               <th>التاليفي</th>
               <th>المعدل</th>
@@ -726,30 +743,100 @@ function toggleTheme(){isDark=!isDark;localStorage.setItem('theme',isDark?'dark'
 //  SUBJECT
 // ══════════════════════════════════════
 function getSubjectKey(){return 'subject_'+currentSchoolYear+'_'+currentClassId;}
+
+// preset weights per subject group
+const SUBJECT_PRESETS = {
+  // Groupe A: shafahi + fardh + taliffi
+  'إنجليزي':        {ws:1,wf:1,wt:2},
+  'تربية مدنية':    {ws:1,wf:1,wt:2},
+  'تربية إسلامية':  {ws:1,wf:1,wt:2},
+  'تاريخ':          {ws:1,wf:1,wt:2},
+  'جغرافيا':        {ws:1,wf:1,wt:2},
+  'تربية موسيقية':  {ws:1,wf:1,wt:2},
+  // Groupe B: bla shafahi
+  'الإعلامية':      {ws:0,wf:1,wt:2},
+  'التربية البدنية': {ws:0,wf:1,wt:2},
+};
+
+function onSubjectSelect(){
+  const sel = document.getElementById('subject-select').value;
+  const customInput = document.getElementById('subject-name-custom');
+  if(sel === '__custom__'){
+    customInput.style.display = 'block';
+    customInput.focus();
+    // keep current weights as-is for custom
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+    // apply preset weights
+    const p = SUBJECT_PRESETS[sel];
+    if(p){
+      document.getElementById('w-shafahi').value = p.ws;
+      document.getElementById('w-fardh').value   = p.wf;
+      document.getElementById('w-taliffi').value  = p.wt;
+      updateFormula();
+    }
+  }
+  saveSubjectSettings();
+}
+
 function saveSubjectSettings(){
-  const s={name:document.getElementById('subject-name').value,ws:parseFloat(document.getElementById('w-shafahi').value)||1,wf:parseFloat(document.getElementById('w-fardh').value)||1,wt:parseFloat(document.getElementById('w-taliffi').value)||2};
-  localStorage.setItem(getSubjectKey(),JSON.stringify(s));updateFormula();
+  const sel = document.getElementById('subject-select').value;
+  const name = sel === '__custom__'
+    ? (document.getElementById('subject-name-custom').value.trim() || 'مادة أخرى')
+    : sel;
+  const s={
+    name: name,
+    select: sel,
+    ws:parseFloat(document.getElementById('w-shafahi').value)||0,
+    wf:parseFloat(document.getElementById('w-fardh').value)||1,
+    wt:parseFloat(document.getElementById('w-taliffi').value)||2
+  };
+  localStorage.setItem(getSubjectKey(),JSON.stringify(s));
+  updateFormula();
   if(typeof schedulePush==='function')schedulePush();
 }
+
 function loadSubjectSettings(){
-  const def={name:'إنجليزي',ws:1,wf:1,wt:2};
+  const def={name:'إنجليزي',select:'إنجليزي',ws:1,wf:1,wt:2};
   const s=JSON.parse(localStorage.getItem(getSubjectKey())||JSON.stringify(def));
-  document.getElementById('subject-name').value=s.name||'';
-  document.getElementById('w-shafahi').value=s.ws;
-  document.getElementById('w-fardh').value=s.wf;
-  document.getElementById('w-taliffi').value=s.wt;
+  const sel = document.getElementById('subject-select');
+  const customInput = document.getElementById('subject-name-custom');
+  // set dropdown value
+  const savedSelect = s.select || s.name;
+  // check if saved value exists in dropdown options
+  const optionExists = Array.from(sel.options).some(o=>o.value===savedSelect);
+  if(optionExists){
+    sel.value = savedSelect;
+    customInput.style.display = 'none';
+    customInput.value = '';
+  } else {
+    // legacy: was a custom name stored before dropdown existed
+    sel.value = '__custom__';
+    customInput.style.display = 'block';
+    customInput.value = s.name||'';
+  }
+  document.getElementById('w-shafahi').value=s.ws!=null?s.ws:1;
+  document.getElementById('w-fardh').value=s.wf!=null?s.wf:1;
+  document.getElementById('w-taliffi').value=s.wt!=null?s.wt:2;
   updateFormula();
 }
 function getWeights(){
-  const ws=parseFloat(document.getElementById('w-shafahi').value)||1;
+  const ws=parseFloat(document.getElementById('w-shafahi').value);
   const wf=parseFloat(document.getElementById('w-fardh').value)||1;
   const wt=parseFloat(document.getElementById('w-taliffi').value)||2;
-  return{ws,wf,wt,total:ws+wf+wt};
+  const wsVal = isNaN(ws)?1:ws;
+  return{ws:wsVal,wf,wt,total:wsVal+wf+wt};
 }
 function updateFormula(){
   const{ws,wf,wt,total}=getWeights();
   const el=document.getElementById('formula-display');
-  if(el)el.textContent=`📐 (ش×${ws} + ف×${wf} + ت×${wt}) ÷ ${total}`;
+  if(!el)return;
+  if(ws===0){
+    el.textContent=`📐 (ف×${wf} + ت×${wt}) ÷ ${total}`;
+  } else {
+    el.textContent=`📐 (ش×${ws} + ف×${wf} + ت×${wt}) ÷ ${total}`;
+  }
 }
 
 // ══════════════════════════════════════
@@ -791,12 +878,18 @@ function getNote(sid,trim,field,cid){
   return(d.notes[sid]&&d.notes[sid]['t'+trim]&&d.notes[sid]['t'+trim][field]!==undefined)?d.notes[sid]['t'+trim][field]:'';
 }
 function moyenne(sid,trim,cid){
-  const sv=parseFloat(getNote(sid,trim,'shafahi',cid));
   const f1=parseFloat(getNote(sid,trim,'fardh1',cid));
   const tf=parseFloat(getNote(sid,trim,'taliffi',cid));
-  if(isNaN(sv)||isNaN(f1)||isNaN(tf))return null;
   const{ws,wf,wt,total}=getWeights();
-  return((sv*ws+f1*wf+tf*wt)/total).toFixed(2);
+  if(ws===0){
+    // no shafahi needed
+    if(isNaN(f1)||isNaN(tf))return null;
+    return((f1*wf+tf*wt)/total).toFixed(2);
+  } else {
+    const sv=parseFloat(getNote(sid,trim,'shafahi',cid));
+    if(isNaN(sv)||isNaN(f1)||isNaN(tf))return null;
+    return((sv*ws+f1*wf+tf*wt)/total).toFixed(2);
+  }
 }
 function moyenneAnnuelle(sid,cid){
   const avgs=[1,2,3].map(t=>parseFloat(moyenne(sid,t,cid))).filter(v=>!isNaN(v));
@@ -954,11 +1047,16 @@ function renderTable(){
   const tbody=document.getElementById('student-tbody');
   document.getElementById('empty-msg').style.display=filtered.length===0?'block':'none';
   const sc=currentClassId,st=currentTrim;
+  const {ws}=getWeights();
+  const showShafahi = ws>0;
+  // show/hide shafahi column header
+  const thShafahi=document.getElementById('th-shafahi');
+  if(thShafahi)thShafahi.style.display=showShafahi?'':'none';
   tbody.innerHTML=filtered.map((s,i)=>`
     <tr>
       <td>${i+1}</td>
       <td>${s.nom}</td>
-      <td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'shafahi',sc)}" oninput="bufferNote(${s.id},${st},'shafahi',this.value,'${sc}')" placeholder="—"/></td>
+      <td style="display:${showShafahi?'':'none'}"><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'shafahi',sc)}" oninput="bufferNote(${s.id},${st},'shafahi',this.value,'${sc}')" placeholder="—"/></td>
       <td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'fardh1',sc)}" oninput="bufferNote(${s.id},${st},'fardh1',this.value,'${sc}')" placeholder="—"/></td>
       <td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'taliffi',sc)}" oninput="bufferNote(${s.id},${st},'taliffi',this.value,'${sc}')" placeholder="—"/></td>
       <td id="badge-${s.id}-${st}">${badgeHTML(moyenne(s.id,st,sc))}</td>
