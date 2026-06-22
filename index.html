@@ -712,6 +712,23 @@ function saveAll(){
 function markUnsaved(){unsaved=true;document.getElementById('save-banner').classList.add('show');}
 function hideSaveBanner(){document.getElementById('save-banner').classList.remove('show');}
 
+function flushPending(){
+  if(!Object.keys(pendingNotes).length)return;
+  Object.keys(pendingNotes).forEach(cid=>{
+    const cd=getCData(cid);if(!cd)return;
+    Object.keys(pendingNotes[cid]).forEach(sid=>{
+      const sidN=parseInt(sid);
+      Object.keys(pendingNotes[cid][sid]).forEach(trim=>{
+        const trimN=parseInt(trim);
+        if(!cd.notes[sidN])cd.notes[sidN]={};
+        if(!cd.notes[sidN][trimN])cd.notes[sidN][trimN]={};
+        Object.assign(cd.notes[sidN][trimN],pendingNotes[cid][sid][trim]);
+      });
+    });
+  });
+  pendingNotes={};
+}
+
 function updateLastEdit(){
   const raw=localStorage.getItem('lastEdit');
   const el=document.getElementById('last-edit-display');
