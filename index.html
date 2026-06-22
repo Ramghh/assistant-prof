@@ -380,7 +380,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
     <div class="form-group" style="margin-bottom:8px">
       <label>📖 المادة</label>
       <select id="subject-select" onchange="onSubjectSelect()" style="width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:9px 12px;border-radius:9px;outline:none;direction:rtl;">
-        <optgroup label="مواد بشفاهي (ش×1 + ف×1 + ت×2)">
+        <optgroup label="ش×1 + ف×1 + ت×2 ÷ 4">
           <option value="إنجليزي">إنجليزي</option>
           <option value="تربية مدنية">تربية مدنية</option>
           <option value="تربية إسلامية">تربية إسلامية</option>
@@ -388,20 +388,22 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
           <option value="جغرافيا">جغرافيا</option>
           <option value="تربية موسيقية">تربية موسيقية</option>
         </optgroup>
-        <optgroup label="مواد بلا شفاهي (ف×1 + ت×2)">
+        <optgroup label="مشروع×1 + ف×1 + ت×2 ÷ 4">
           <option value="الإعلامية">الإعلامية</option>
+          <option value="التربية التكنولوجية">التربية التكنولوجية</option>
+        </optgroup>
+        <optgroup label="بلا شفاهي — ف×1 + ت×2 ÷ 3">
           <option value="التربية البدنية">التربية البدنية</option>
         </optgroup>
+        <optgroup label="ش×1 + د.نص+لغة×1 + تعبير×1 + ت×2 ÷ 5">
+          <option value="الفرنسية">الفرنسية</option>
+          <option value="العربية">العربية</option>
+        </optgroup>
         <optgroup label="مادة أخرى">
-          <option value="__custom__">مادة أخرى (يدوي) ✏️</option>
+          <option value="__custom__">✏️ مادة أخرى (يدوي)</option>
         </optgroup>
       </select>
       <input type="text" id="subject-name-custom" placeholder="اسم المادة..." oninput="saveSubjectSettings()" style="display:none;margin-top:7px;width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:9px 12px;border-radius:9px;outline:none;direction:rtl;"/>
-    </div>
-    <div class="weight-row">
-      <div class="weight-item">شفاهي × <input type="number" id="w-shafahi" min="0" max="10" step="0.5" value="1" oninput="saveSubjectSettings();updateFormula()"/></div>
-      <div class="weight-item">فرض × <input type="number" id="w-fardh" min="0" max="10" step="0.5" value="1" oninput="saveSubjectSettings();updateFormula()"/></div>
-      <div class="weight-item">تاليفي × <input type="number" id="w-taliffi" min="0" max="10" step="0.5" value="2" oninput="saveSubjectSettings();updateFormula()"/></div>
     </div>
     <div class="formula-display" id="formula-display">📐 (ش×1 + ف×1 + ت×2) ÷ 4</div>
   </div>
@@ -499,6 +501,8 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
               <th>#</th>
               <th style="text-align:right;padding-right:8px">الاسم واللقب</th>
               <th id="th-shafahi">الشفاهي</th>
+              <th id="th-dnass" style="display:none">د.نص+لغة</th>
+              <th id="th-ta3bir" style="display:none">تعبير</th>
               <th>الفرض الأول</th>
               <th>التاليفي</th>
               <th>المعدل</th>
@@ -744,19 +748,25 @@ function toggleTheme(){isDark=!isDark;localStorage.setItem('theme',isDark?'dark'
 // ══════════════════════════════════════
 function getSubjectKey(){return 'subject_'+currentSchoolYear+'_'+currentClassId;}
 
-// preset weights per subject group
+// groupe: A=sh+f+t÷4 | B=mashrou3+f+t÷4 | C=f+t÷3 | D=sh+dnass+ta3bir+t÷5 | custom
 const SUBJECT_PRESETS = {
-  // Groupe A: shafahi + fardh + taliffi
-  'إنجليزي':        {ws:1,wf:1,wt:2},
-  'تربية مدنية':    {ws:1,wf:1,wt:2},
-  'تربية إسلامية':  {ws:1,wf:1,wt:2},
-  'تاريخ':          {ws:1,wf:1,wt:2},
-  'جغرافيا':        {ws:1,wf:1,wt:2},
-  'تربية موسيقية':  {ws:1,wf:1,wt:2},
-  // Groupe B: bla shafahi
-  'الإعلامية':      {ws:0,wf:1,wt:2},
-  'التربية البدنية': {ws:0,wf:1,wt:2},
+  'إنجليزي':             {groupe:'A'},
+  'تربية مدنية':         {groupe:'A'},
+  'تربية إسلامية':       {groupe:'A'},
+  'تاريخ':               {groupe:'A'},
+  'جغرافيا':             {groupe:'A'},
+  'تربية موسيقية':       {groupe:'A'},
+  'الإعلامية':           {groupe:'B'},
+  'التربية التكنولوجية': {groupe:'B'},
+  'التربية البدنية':     {groupe:'C'},
+  'الفرنسية':            {groupe:'D'},
+  'العربية':             {groupe:'D'},
 };
+
+function getGroupe(){
+  const s=JSON.parse(localStorage.getItem(getSubjectKey())||'{}');
+  return s.groupe||'A';
+}
 
 function onSubjectSelect(){
   const sel = document.getElementById('subject-select').value;
@@ -764,20 +774,12 @@ function onSubjectSelect(){
   if(sel === '__custom__'){
     customInput.style.display = 'block';
     customInput.focus();
-    // keep current weights as-is for custom
   } else {
     customInput.style.display = 'none';
     customInput.value = '';
-    // apply preset weights
-    const p = SUBJECT_PRESETS[sel];
-    if(p){
-      document.getElementById('w-shafahi').value = p.ws;
-      document.getElementById('w-fardh').value   = p.wf;
-      document.getElementById('w-taliffi').value  = p.wt;
-      updateFormula();
-    }
   }
   saveSubjectSettings();
+  renderTable();
 }
 
 function saveSubjectSettings(){
@@ -785,112 +787,78 @@ function saveSubjectSettings(){
   const name = sel === '__custom__'
     ? (document.getElementById('subject-name-custom').value.trim() || 'مادة أخرى')
     : sel;
-  const s={
-    name: name,
-    select: sel,
-    ws:parseFloat(document.getElementById('w-shafahi').value)||0,
-    wf:parseFloat(document.getElementById('w-fardh').value)||1,
-    wt:parseFloat(document.getElementById('w-taliffi').value)||2
-  };
-  localStorage.setItem(getSubjectKey(),JSON.stringify(s));
+  const preset = SUBJECT_PRESETS[sel];
+  const groupe = preset ? preset.groupe : 'custom';
+  localStorage.setItem(getSubjectKey(), JSON.stringify({name, select:sel, groupe}));
   updateFormula();
-  if(typeof schedulePush==='function')schedulePush();
+  if(typeof schedulePush==='function') schedulePush();
 }
 
 function loadSubjectSettings(){
-  const def={name:'إنجليزي',select:'إنجليزي',ws:1,wf:1,wt:2};
+  const def={name:'إنجليزي',select:'إنجليزي',groupe:'A'};
   const s=JSON.parse(localStorage.getItem(getSubjectKey())||JSON.stringify(def));
   const sel = document.getElementById('subject-select');
   const customInput = document.getElementById('subject-name-custom');
-  // set dropdown value
   const savedSelect = s.select || s.name;
-  // check if saved value exists in dropdown options
   const optionExists = Array.from(sel.options).some(o=>o.value===savedSelect);
   if(optionExists){
     sel.value = savedSelect;
     customInput.style.display = 'none';
     customInput.value = '';
   } else {
-    // legacy: was a custom name stored before dropdown existed
     sel.value = '__custom__';
     customInput.style.display = 'block';
     customInput.value = s.name||'';
   }
-  document.getElementById('w-shafahi').value=s.ws!=null?s.ws:1;
-  document.getElementById('w-fardh').value=s.wf!=null?s.wf:1;
-  document.getElementById('w-taliffi').value=s.wt!=null?s.wt:2;
   updateFormula();
 }
+
 function getWeights(){
-  const ws=parseFloat(document.getElementById('w-shafahi').value);
-  const wf=parseFloat(document.getElementById('w-fardh').value)||1;
-  const wt=parseFloat(document.getElementById('w-taliffi').value)||2;
-  const wsVal = isNaN(ws)?1:ws;
-  return{ws:wsVal,wf,wt,total:wsVal+wf+wt};
-}
-function updateFormula(){
-  const{ws,wf,wt,total}=getWeights();
-  const el=document.getElementById('formula-display');
-  if(!el)return;
-  if(ws===0){
-    el.textContent=`📐 (ف×${wf} + ت×${wt}) ÷ ${total}`;
-  } else {
-    el.textContent=`📐 (ش×${ws} + ف×${wf} + ت×${wt}) ÷ ${total}`;
-  }
+  const g=getGroupe();
+  if(g==='A') return{ws:1,wf:1,wt:2,wd:0,wb:0,total:4,groupe:'A'};
+  if(g==='B') return{ws:1,wf:1,wt:2,wd:0,wb:0,total:4,groupe:'B'};
+  if(g==='C') return{ws:0,wf:1,wt:2,wd:0,wb:0,total:3,groupe:'C'};
+  if(g==='D') return{ws:1,wf:1,wt:2,wd:1,wb:1,total:5,groupe:'D'};
+  return{ws:1,wf:1,wt:2,wd:0,wb:0,total:4,groupe:'custom'};
 }
 
-// ══════════════════════════════════════
-//  NOTES
-// ══════════════════════════════════════
-function bufferNote(sid,trim,field,val,snapCid){
-  const cid=snapCid||currentClassId;
-  if(!pendingNotes[cid])pendingNotes[cid]={};
-  if(!pendingNotes[cid][sid])pendingNotes[cid][sid]={};
-  if(!pendingNotes[cid][sid][trim])pendingNotes[cid][sid][trim]={};
-  pendingNotes[cid][sid][trim][field]=val;
-  markUnsaved();
-  if(cid===currentClassId){
-    const el=document.getElementById('badge-'+sid+'-'+trim);
-    if(el)el.innerHTML=badgeHTML(moyenne(sid,trim,cid));
-    renderStats();
-  }
+function updateFormula(){
+  const el=document.getElementById('formula-display');
+  if(!el)return;
+  const g=getGroupe();
+  const map={
+    'A':'📐 (ش×1 + ف×1 + ت×2) ÷ 4',
+    'B':'📐 (م×1 + ف×1 + ت×2) ÷ 4',
+    'C':'📐 (ف×1 + ت×2) ÷ 3',
+    'D':'📐 (ش×1 + د.ن×1 + تع×1 + ت×2) ÷ 5',
+    'custom':'📐 (ش×1 + ف×1 + ت×2) ÷ 4',
+  };
+  el.textContent = map[g]||map['A'];
+  const thSh=document.getElementById('th-shafahi');
+  if(thSh) thSh.textContent = g==='B' ? 'المشروع' : 'الشفاهي';
 }
-function flushPending(){
-  const yd=getYearData();if(!yd)return;
-  Object.keys(pendingNotes).forEach(function(cid){
-    if(!yd.classData[cid])yd.classData[cid]={students:[],notes:{},nextId:1};
-    const d=yd.classData[cid];
-    Object.keys(pendingNotes[cid]).forEach(function(sid){
-      const sn=parseInt(sid);if(!d.notes[sn])d.notes[sn]={};
-      Object.keys(pendingNotes[cid][sid]).forEach(function(trim){
-        if(!d.notes[sn]['t'+trim])d.notes[sn]['t'+trim]={};
-        Object.assign(d.notes[sn]['t'+trim],pendingNotes[cid][sid][trim]);
-      });
-    });
-  });
-  pendingNotes={};
-}
-function getNote(sid,trim,field,cid){
-  const id=cid||currentClassId;
-  const buf=pendingNotes[id]&&pendingNotes[id][sid]&&pendingNotes[id][sid][trim];
-  if(buf&&buf[field]!==undefined)return buf[field];
-  const d=getCData(id);if(!d)return '';
-  return(d.notes[sid]&&d.notes[sid]['t'+trim]&&d.notes[sid]['t'+trim][field]!==undefined)?d.notes[sid]['t'+trim][field]:'';
-}
+
 function moyenne(sid,trim,cid){
   const f1=parseFloat(getNote(sid,trim,'fardh1',cid));
   const tf=parseFloat(getNote(sid,trim,'taliffi',cid));
-  const{ws,wf,wt,total}=getWeights();
-  if(ws===0){
-    // no shafahi needed
+  const{ws,wf,wt,wd,wb,total,groupe}=getWeights();
+  if(groupe==='C'){
     if(isNaN(f1)||isNaN(tf))return null;
-    return((f1*wf+tf*wt)/total).toFixed(2);
-  } else {
-    const sv=parseFloat(getNote(sid,trim,'shafahi',cid));
-    if(isNaN(sv)||isNaN(f1)||isNaN(tf))return null;
-    return((sv*ws+f1*wf+tf*wt)/total).toFixed(2);
+    return((f1+tf*wt)/total).toFixed(2);
   }
+  if(groupe==='D'){
+    const sv=parseFloat(getNote(sid,trim,'shafahi',cid));
+    const dn=parseFloat(getNote(sid,trim,'dnass',cid));
+    const tb=parseFloat(getNote(sid,trim,'ta3bir',cid));
+    if(isNaN(sv)||isNaN(dn)||isNaN(tb)||isNaN(f1)||isNaN(tf))return null;
+    return((sv+dn+tb+tf*wt)/total).toFixed(2);
+  }
+  // A, B, custom
+  const sv=parseFloat(getNote(sid,trim,'shafahi',cid));
+  if(isNaN(sv)||isNaN(f1)||isNaN(tf))return null;
+  return((sv+f1+tf*wt)/total).toFixed(2);
 }
+
 function moyenneAnnuelle(sid,cid){
   const avgs=[1,2,3].map(t=>parseFloat(moyenne(sid,t,cid))).filter(v=>!isNaN(v));
   if(!avgs.length)return null;
@@ -1047,16 +1015,24 @@ function renderTable(){
   const tbody=document.getElementById('student-tbody');
   document.getElementById('empty-msg').style.display=filtered.length===0?'block':'none';
   const sc=currentClassId,st=currentTrim;
-  const {ws}=getWeights();
-  const showShafahi = ws>0;
-  // show/hide shafahi column header
-  const thShafahi=document.getElementById('th-shafahi');
-  if(thShafahi)thShafahi.style.display=showShafahi?'':'none';
+  const {groupe}=getWeights();
+  const showSh  = groupe!=='C';           // A,B,D,custom: show shafahi/mashrou3
+  const showDN  = groupe==='D';           // D only: dnass
+  const showTB  = groupe==='D';           // D only: ta3bir
+  // headers
+  const thSh=document.getElementById('th-shafahi');
+  const thDN=document.getElementById('th-dnass');
+  const thTB=document.getElementById('th-ta3bir');
+  if(thSh){thSh.style.display=showSh?'':'none'; thSh.textContent=groupe==='B'?'المشروع':'الشفاهي';}
+  if(thDN) thDN.style.display=showDN?'':'none';
+  if(thTB) thTB.style.display=showTB?'':'none';
   tbody.innerHTML=filtered.map((s,i)=>`
     <tr>
       <td>${i+1}</td>
       <td>${s.nom}</td>
-      <td style="display:${showShafahi?'':'none'}"><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'shafahi',sc)}" oninput="bufferNote(${s.id},${st},'shafahi',this.value,'${sc}')" placeholder="—"/></td>
+      <td style="display:${showSh?'':'none'}"><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'shafahi',sc)}" oninput="bufferNote(${s.id},${st},'shafahi',this.value,'${sc}')" placeholder="—"/></td>
+      <td style="display:${showDN?'':'none'}"><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'dnass',sc)}" oninput="bufferNote(${s.id},${st},'dnass',this.value,'${sc}')" placeholder="—"/></td>
+      <td style="display:${showTB?'':'none'}"><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'ta3bir',sc)}" oninput="bufferNote(${s.id},${st},'ta3bir',this.value,'${sc}')" placeholder="—"/></td>
       <td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'fardh1',sc)}" oninput="bufferNote(${s.id},${st},'fardh1',this.value,'${sc}')" placeholder="—"/></td>
       <td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,'taliffi',sc)}" oninput="bufferNote(${s.id},${st},'taliffi',this.value,'${sc}')" placeholder="—"/></td>
       <td id="badge-${s.id}-${st}">${badgeHTML(moyenne(s.id,st,sc))}</td>
