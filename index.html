@@ -2012,9 +2012,11 @@ function submitAuthForm(){
     if(password.length < 6){ showAuthError('كلمة السر لازم 6 خانات على الأقل'); reset(); return; }
     if(password !== password2){ showAuthError('كلمتي السر ما يتطابقوش'); reset(); return; }
     fbAuth.createUserWithEmailAndPassword(email, password)
+      .then(()=>reset())
       .catch(err=>{ showAuthError(authErrorMessage(err)); reset(); });
   } else {
     fbAuth.signInWithEmailAndPassword(email, password)
+      .then(()=>reset())
       .catch(err=>{ showAuthError(authErrorMessage(err)); reset(); });
   }
 }
