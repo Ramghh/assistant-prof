@@ -280,6 +280,26 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .user-pill-logout{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;font-weight:700;padding:2px 4px;}
 
 
+
+/* ══ CAHIER DE TEXTE ══ */
+.cahier-form{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+.cahier-row{display:flex;gap:8px;flex-wrap:wrap;}
+.cahier-row .form-group{flex:1;min-width:130px;}
+.cahier-entry{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:10px;cursor:pointer;transition:border 0.2s;}
+.cahier-entry:hover{border-color:var(--gold)99;}
+.cahier-entry-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;}
+.cahier-entry-date{font-size:0.82rem;color:var(--gold);font-weight:700;}
+.cahier-entry-class{font-size:0.78rem;color:var(--text2);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
+.cahier-entry-lesson{font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.cahier-entry-unit{font-size:0.78rem;color:var(--text2);margin-bottom:4px;}
+.cahier-entry-body{font-size:0.82rem;color:var(--text2);display:flex;flex-wrap:wrap;gap:6px 14px;}
+.cahier-entry-body span{display:flex;align-items:center;gap:3px;}
+.cahier-hw{color:var(--gold);font-weight:600;}
+.cahier-filter{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.cahier-filter select{flex:1;min-width:100px;}
+.cahier-empty{text-align:center;color:var(--text2);padding:30px;font-size:0.9rem;}
+.cahier-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.85rem;padding:2px 6px;opacity:0.7;}
+.cahier-del:hover{opacity:1;}
 /* ══ SPINNING WHEEL ══ */
 #wheel-modal .modal{max-width:420px;text-align:center;overflow:hidden;}
 .wheel-container{position:relative;width:300px;height:300px;margin:0 auto 16px;}
@@ -291,6 +311,27 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .wheel-remaining{font-size:0.78rem;color:var(--text2);margin-top:10px;}
 @keyframes confettiPop{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(0.4);}}
 .confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none;animation:confettiPop 0.9s ease forwards;}
+
+/* ══ CAHIER DE TEXTE ══ */
+.cahier-form{display:flex;flex-direction:column;gap:10px;}
+.cahier-row{display:flex;gap:10px;flex-wrap:wrap;}
+.cahier-row .form-group{flex:1;min-width:120px;}
+.cahier-filter{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.cahier-entry{border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:10px;position:relative;transition:border 0.2s;}
+.cahier-entry:hover{border-color:var(--gold)66;}
+.cahier-entry-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.cahier-date-badge{background:var(--gold)22;border:1px solid var(--gold)66;color:var(--gold);border-radius:8px;padding:3px 10px;font-size:0.8rem;font-weight:700;white-space:nowrap;}
+.cahier-class-badge{background:var(--surface2);border-radius:8px;padding:3px 10px;font-size:0.8rem;color:var(--text2);white-space:nowrap;}
+.cahier-time-badge{font-size:0.78rem;color:var(--text2);}
+.cahier-lesson-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px;}
+.cahier-unit-label{font-size:0.8rem;color:var(--gold);margin-bottom:6px;}
+.cahier-fields{display:flex;flex-direction:column;gap:4px;}
+.cahier-field{display:flex;gap:6px;font-size:0.82rem;flex-wrap:wrap;}
+.cahier-field-label{color:var(--text2);min-width:90px;flex-shrink:0;}
+.cahier-field-val{color:var(--text);}
+.cahier-hw-badge{display:inline-block;background:#e74c3c22;border:1px solid #e74c3c66;color:#e74c3c;border-radius:8px;padding:3px 10px;font-size:0.8rem;margin-top:6px;}
+.cahier-del-btn{position:absolute;top:10px;left:10px;background:none;border:none;color:var(--text2);font-size:0.9rem;cursor:pointer;opacity:0.5;transition:opacity 0.2s;}
+.cahier-del-btn:hover{opacity:1;color:var(--red);}
 /* ══ SUBJECT SELECTOR ══ */
 .subject-select-row{display:flex;gap:6px;align-items:center;margin-bottom:8px;}
 .subject-select-row select{flex:1;font-size:0.88rem;padding:6px 9px;}
@@ -455,6 +496,8 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   <button class="nav-btn" onclick="showPage('annual',this)">📊 ملخص سنوي</button>
   <button class="nav-btn" onclick="showPage('rapport',this)">📈 تقرير</button>
   <button class="nav-btn" onclick="showPage('absence',this)">📋 سجل الغياب</button>
+  <button class="nav-btn" onclick="showPage('cahier',this);initCahier()">📓 كراس القسم</button>
+  <button class="nav-btn" onclick="showPage('cahier',this);renderCahier()">📓 كراس القسم</button>
 </div>
 
 <!-- SAVE BANNER -->
@@ -622,6 +665,74 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
       <div class="card-title">📋 السجل</div>
       <div id="absence-log"></div>
       <div id="absence-log-empty" class="empty" style="display:none">ما فماش غياب مسجّل</div>
+    </div>
+  </div>
+
+
+  <!-- PAGE: CAHIER DE TEXTE -->
+  <div class="page" id="page-cahier">
+    <div class="card">
+      <div class="card-title">📓 كراس القسم — إضافة حصة</div>
+      <div class="cahier-form">
+        <div class="cahier-row">
+          <div class="form-group">
+            <label>📅 التاريخ</label>
+            <input type="date" id="cahier-date"/>
+          </div>
+          <div class="form-group">
+            <label>🕐 التوقيت</label>
+            <input type="text" id="cahier-time" placeholder="مثال: 14h-15h"/>
+          </div>
+          <div class="form-group">
+            <label>🏫 القسم</label>
+            <select id="cahier-class-sel"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>📚 الوحدة — Unit</label>
+          <input type="text" id="cahier-unit" placeholder="مثال: Unit 3 — Entertainment"/>
+        </div>
+        <div class="form-group">
+          <label>📖 الدرس — Lesson</label>
+          <input type="text" id="cahier-lesson" placeholder="عنوان الدرس"/>
+        </div>
+        <div class="form-group">
+          <label>🎯 الأهداف — Objectives</label>
+          <textarea id="cahier-objectives" rows="2" placeholder="By the end of the lesson, students will be able to..."></textarea>
+        </div>
+        <div class="cahier-row">
+          <div class="form-group">
+            <label>🗣️ المهارات — Skills</label>
+            <input type="text" id="cahier-skills" placeholder="Reading / Writing / Speaking..."/>
+          </div>
+          <div class="form-group">
+            <label>🏗️ التراكيب — Structure</label>
+            <input type="text" id="cahier-structure" placeholder="مثال: Present Perfect"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>📝 المفردات — Vocabulary</label>
+          <input type="text" id="cahier-vocab" placeholder="مثال: entertain, leisure, broadcast..."/>
+        </div>
+        <div class="form-group">
+          <label>📌 الواجب — Homework <span style="color:var(--text2);font-size:0.78rem">(اختياري)</span></label>
+          <input type="text" id="cahier-hw" placeholder="ان وجد..."/>
+        </div>
+        <button class="btn btn-gold btn-full" onclick="addCahierEntry()">💾 حفظ الحصة</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 سجل الحصص</div>
+      <div class="cahier-filter">
+        <label style="color:var(--text2);font-size:0.82rem;white-space:nowrap">فلتر:</label>
+        <select id="cahier-filter-class" onchange="renderCahier()">
+          <option value="">كل الأقسام</option>
+        </select>
+        <input type="text" id="cahier-search" placeholder="🔍 ابحث في الدروس..." oninput="renderCahier()" style="flex:1;min-width:120px"/>
+      </div>
+      <div id="cahier-list"></div>
+      <div id="cahier-empty" class="empty" style="display:none">ما فماش حصص مسجّلة</div>
     </div>
   </div>
 
@@ -2555,6 +2666,135 @@ function spawnConfetti(){
     modal.appendChild(el);
     setTimeout(()=>el.remove(),1200);
   }
+}
+
+// ══════════════════════════════════════
+//  CAHIER DE TEXTE
+// ══════════════════════════════════════
+function getCahierData(){
+  const yd=getYearData();
+  if(!yd)return[];
+  if(!yd.cahier)yd.cahier=[];
+  return yd.cahier;
+}
+
+function initCahier(){
+  // set today's date
+  const dateInp=document.getElementById('cahier-date');
+  if(dateInp&&!dateInp.value){
+    dateInp.value=new Date().toISOString().split('T')[0];
+  }
+  // fill class selectors
+  const classes=getClasses();
+  const sel=document.getElementById('cahier-class-sel');
+  const filterSel=document.getElementById('cahier-filter-class');
+  if(sel){
+    sel.innerHTML=classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+    if(currentClassId)sel.value=currentClassId;
+  }
+  if(filterSel){
+    filterSel.innerHTML='<option value="">كل الأقسام</option>'+
+      classes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  renderCahier();
+}
+
+function addCahierEntry(){
+  const get=id=>document.getElementById(id)?.value.trim()||'';
+  const date=get('cahier-date');
+  const time=get('cahier-time');
+  const classId=document.getElementById('cahier-class-sel')?.value||'';
+  const unit=get('cahier-unit');
+  const lesson=get('cahier-lesson');
+  const objectives=get('cahier-objectives');
+  const skills=get('cahier-skills');
+  const structure=get('cahier-structure');
+  const vocab=get('cahier-vocab');
+  const hw=get('cahier-hw');
+
+  if(!date){alert('حط التاريخ!');return;}
+  if(!lesson){alert('حط عنوان الدرس!');return;}
+
+  const classes=getClasses();
+  const cls=classes.find(c=>c.id===classId);
+
+  const entry={
+    id:'ch'+Date.now(),
+    date,time,
+    classId,className:cls?cls.name:'—',
+    unit,lesson,objectives,skills,structure,vocab,hw,
+    createdAt:new Date().toISOString()
+  };
+
+  const cahier=getCahierData();
+  cahier.unshift(entry); // newest first
+  saveAll();
+
+  // clear form (keep date, time, class)
+  ['cahier-unit','cahier-lesson','cahier-objectives','cahier-skills','cahier-structure','cahier-vocab','cahier-hw']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+
+  renderCahier();
+  // flash the card title briefly
+  const btn=document.querySelector('#page-cahier .btn-gold');
+  if(btn){const orig=btn.textContent;btn.textContent='✅ تم الحفظ!';btn.style.background='#27ae60';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1800);}
+}
+
+function deleteCahierEntry(id){
+  if(!confirm('تحذف هذه الحصة؟'))return;
+  const yd=getYearData();if(!yd||!yd.cahier)return;
+  yd.cahier=yd.cahier.filter(e=>e.id!==id);
+  saveAll();renderCahier();
+}
+
+function renderCahier(){
+  const cahier=getCahierData();
+  const filterClass=document.getElementById('cahier-filter-class')?.value||'';
+  const search=(document.getElementById('cahier-search')?.value||'').toLowerCase();
+
+  let entries=cahier;
+  if(filterClass)entries=entries.filter(e=>e.classId===filterClass);
+  if(search)entries=entries.filter(e=>
+    (e.lesson||'').toLowerCase().includes(search)||
+    (e.unit||'').toLowerCase().includes(search)||
+    (e.vocab||'').toLowerCase().includes(search)||
+    (e.objectives||'').toLowerCase().includes(search)
+  );
+
+  const list=document.getElementById('cahier-list');
+  const empty=document.getElementById('cahier-empty');
+  if(!list)return;
+
+  if(!entries.length){
+    list.innerHTML='';
+    if(empty)empty.style.display='block';
+    return;
+  }
+  if(empty)empty.style.display='none';
+
+  list.innerHTML=entries.map(e=>{
+    const fields=[
+      e.objectives?{label:'🎯 Objectives',val:e.objectives}:null,
+      e.skills?{label:'🗣️ Skills',val:e.skills}:null,
+      e.structure?{label:'🏗️ Structure',val:e.structure}:null,
+      e.vocab?{label:'📝 Vocabulary',val:e.vocab}:null,
+    ].filter(Boolean);
+
+    return `<div class="cahier-entry">
+      <button class="cahier-del-btn" onclick="deleteCahierEntry('${e.id}')" title="حذف">🗑️</button>
+      <div class="cahier-entry-header">
+        <span class="cahier-date-badge">📅 ${e.date}</span>
+        ${e.time?`<span class="cahier-time-badge">🕐 ${e.time}</span>`:''}
+        <span class="cahier-class-badge">🏫 ${e.className}</span>
+      </div>
+      ${e.unit?`<div class="cahier-unit-label">📚 ${e.unit}</div>`:''}
+      <div class="cahier-lesson-title">📖 ${e.lesson}</div>
+      <div class="cahier-fields">
+        ${fields.map(f=>`<div class="cahier-field"><span class="cahier-field-label">${f.label}</span><span class="cahier-field-val">${f.val}</span></div>`).join('')}
+      </div>
+      ${e.hw?`<div class="cahier-hw-badge">📌 HW: ${e.hw}</div>`:''}
+    </div>`;
+  }).join('');
 }
 </script>
 
