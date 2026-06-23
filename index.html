@@ -332,6 +332,20 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .cahier-hw-badge{display:inline-block;background:#e74c3c22;border:1px solid #e74c3c66;color:#e74c3c;border-radius:8px;padding:3px 10px;font-size:0.8rem;margin-top:6px;}
 .cahier-del-btn{position:absolute;top:10px;left:10px;background:none;border:none;color:var(--text2);font-size:0.9rem;cursor:pointer;opacity:0.5;transition:opacity 0.2s;}
 .cahier-del-btn:hover{opacity:1;color:var(--red);}
+
+@media print {
+  body > *:not(#print-area){ display:none!important; }
+  #print-area{ display:block!important; }
+  #print-area{ font-family:"Amiri",serif; direction:rtl; color:#000; background:#fff; padding:20px; }
+  .print-header{ text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:16px; }
+  .print-title{ font-size:1.4rem; font-weight:800; }
+  .print-sub{ font-size:0.85rem; color:#555; margin-top:4px; }
+  .print-field{ display:flex; gap:8px; margin-bottom:8px; font-size:0.95rem; border-bottom:1px solid #eee; padding-bottom:6px; }
+  .print-label{ font-weight:700; min-width:110px; flex-shrink:0; }
+  .print-val{ flex:1; }
+  .print-hw{ background:#fff3cd; border:1px solid #f0ad4e; border-radius:6px; padding:6px 10px; margin-top:10px; font-weight:700; }
+}
+#print-area{ display:none; }
 /* ══ SUBJECT SELECTOR ══ */
 .subject-select-row{display:flex;gap:6px;align-items:center;margin-bottom:8px;}
 .subject-select-row select{flex:1;font-size:0.88rem;padding:6px 9px;}
@@ -497,7 +511,6 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   <button class="nav-btn" onclick="showPage('rapport',this)">📈 تقرير</button>
   <button class="nav-btn" onclick="showPage('absence',this)">📋 سجل الغياب</button>
   <button class="nav-btn" onclick="showPage('cahier',this);initCahier()">📓 كراس القسم</button>
-  <button class="nav-btn" onclick="showPage('cahier',this);renderCahier()">📓 كراس القسم</button>
 </div>
 
 <!-- SAVE BANNER -->
@@ -2781,7 +2794,10 @@ function renderCahier(){
     ].filter(Boolean);
 
     return `<div class="cahier-entry">
-      <button class="cahier-del-btn" onclick="deleteCahierEntry('${e.id}')" title="حذف">🗑️</button>
+      <div style="position:absolute;top:10px;left:10px;display:flex;gap:6px;">
+        <button class="cahier-del-btn" onclick="printCahierEntry('${e.id}')" title="طباعة / PDF" style="position:static;opacity:0.6;font-size:0.85rem">🖨️</button>
+        <button class="cahier-del-btn" onclick="deleteCahierEntry('${e.id}')" title="حذف" style="position:static">🗑️</button>
+      </div>
       <div class="cahier-entry-header">
         <span class="cahier-date-badge">📅 ${e.date}</span>
         ${e.time?`<span class="cahier-time-badge">🕐 ${e.time}</span>`:''}
@@ -2795,6 +2811,40 @@ function renderCahier(){
       ${e.hw?`<div class="cahier-hw-badge">📌 HW: ${e.hw}</div>`:''}
     </div>`;
   }).join('');
+}
+
+// ══ PRINT CAHIER ENTRY ══
+function printCahierEntry(id){
+  const cahier=getCahierData();
+  const e=cahier.find(x=>x.id===id);
+  if(!e)return;
+
+  const subjectName=getSubject()?getSubject().name:'إنجليزي';
+  const institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
+  const teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
+
+  const field=(label,val)=>val?
+    `<div class="print-field"><span class="print-label">${label}</span><span class="print-val">${val}</span></div>`:'';
+
+  const html=`
+    <div class="print-header">
+      ${institution?`<div style="font-size:0.9rem;color:#555">${institution}</div>`:''}
+      <div class="print-title">📓 كراس القسم — ${subjectName}</div>
+      <div class="print-sub">${teacher?'الأستاذ: '+teacher+' — ':''} ${e.className} — ${e.date}${e.time?' — '+e.time:''}</div>
+    </div>
+    ${field('📚 Unit',e.unit)}
+    ${field('📖 Lesson',e.lesson)}
+    ${field('🎯 Objectives',e.objectives)}
+    ${field('🗣️ Skills',e.skills)}
+    ${field('🏗️ Structure',e.structure)}
+    ${field('📝 Vocabulary',e.vocab)}
+    ${e.hw?`<div class="print-hw">📌 Homework: ${e.hw}</div>`:''}
+  `;
+
+  const area=document.getElementById('print-area');
+  area.innerHTML=html;
+  window.print();
+  setTimeout(()=>area.innerHTML='', 500);
 }
 </script>
 
@@ -2825,6 +2875,7 @@ function renderCahier(){
     <div class="wheel-remaining" id="wheel-remaining"></div>
   </div>
 </div>
+<div id="print-area"></div>
 </body>
 </html>
 
