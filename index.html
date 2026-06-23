@@ -736,7 +736,10 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
     </div>
 
     <div class="card">
-      <div class="card-title">📋 سجل الحصص</div>
+      <div class="card-title">
+        📋 سجل الحصص
+        <button class="btn btn-outline btn-sm" onclick="printAllCahier()" style="margin-right:auto;font-size:0.8rem">🖨️ طباعة الكل</button>
+      </div>
       <div class="cahier-filter">
         <label style="color:var(--text2);font-size:0.82rem;white-space:nowrap">فلتر:</label>
         <select id="cahier-filter-class" onchange="renderCahier()">
@@ -2845,6 +2848,53 @@ function printCahierEntry(id){
   area.innerHTML=html;
   window.print();
   setTimeout(()=>area.innerHTML='', 500);
+}
+
+function printAllCahier(){
+  const cahier=getCahierData();
+  const filterClass=document.getElementById('cahier-filter-class')?.value||'';
+  const search=(document.getElementById('cahier-search')?.value||'').toLowerCase();
+  let entries=cahier;
+  if(filterClass)entries=entries.filter(e=>e.classId===filterClass);
+  if(search)entries=entries.filter(e=>
+    (e.lesson||'').toLowerCase().includes(search)||
+    (e.unit||'').toLowerCase().includes(search)||
+    (e.vocab||'').toLowerCase().includes(search)
+  );
+  if(!entries.length){alert('ما فماش حصص للطباعة!');return;}
+
+  const subjectName=getSubject()?getSubject().name:'إنجليزي';
+  const institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
+  const teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
+  const field=(label,val)=>val?`<div class="print-field"><span class="print-label">${label}</span><span class="print-val">${val}</span></div>`:'';
+
+  const body=entries.map((e,i)=>`
+    <div style="page-break-inside:avoid;margin-bottom:24px;border-bottom:1px solid #ccc;padding-bottom:16px;">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+        <strong style="font-size:1rem">${i+1}. ${e.lesson||'—'}</strong>
+        <span style="font-size:0.82rem;color:#555">${e.className} — ${e.date}${e.time?' — '+e.time:''}</span>
+      </div>
+      ${e.unit?`<div style="color:#7a4a10;font-size:0.85rem;margin-bottom:6px">📚 ${e.unit}</div>`:''}
+      ${field('🎯 Objectives',e.objectives)}
+      ${field('🗣️ Skills',e.skills)}
+      ${field('🏗️ Structure',e.structure)}
+      ${field('📝 Vocabulary',e.vocab)}
+      ${e.hw?`<div class="print-hw">📌 Homework: ${e.hw}</div>`:''}
+    </div>`).join('');
+
+  const html=`
+    <div class="print-header">
+      ${institution?`<div style="font-size:0.9rem;color:#555">${institution}</div>`:''}
+      <div class="print-title">📓 كراس القسم — ${subjectName}</div>
+      <div class="print-sub">${teacher?'الأستاذ: '+teacher+' — ':''} ${filterClass?(entries[0]?.className||''):'كل الأقسام'} — السنة ${currentSchoolYear}</div>
+      <div class="print-sub" style="margin-top:4px">${entries.length} حصة</div>
+    </div>
+    ${body}`;
+
+  const area=document.getElementById('print-area');
+  area.innerHTML=html;
+  window.print();
+  setTimeout(()=>area.innerHTML='',500);
 }
 </script>
 
