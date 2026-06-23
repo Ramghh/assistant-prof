@@ -138,8 +138,12 @@ body.light .stbl th{background:#b07830;color:#ffffff;}
 .note-input{width:62px;padding:5px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Amiri',serif;font-size:0.9rem;text-align:center;transition:border 0.2s;}
 .note-input:focus{border-color:var(--gold);outline:none;}
 .note-input.invalid{border-color:var(--red)!important;background:rgba(220,50,50,0.10);}
+.student-ts{font-size:0.68rem;color:var(--text2);opacity:0.7;display:block;margin-top:1px;}
 @keyframes slideInRow{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .row-new{animation:slideInRow 0.28s ease;}
+/* offline banner */
+#offline-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#c0392b;color:#fff;text-align:center;padding:7px 14px;font-size:0.85rem;font-weight:700;letter-spacing:0.3px;}
+#offline-banner.show{display:block;}
 
 /* ══ BADGES ══ */
 .badge{display:inline-block;border-radius:7px;padding:2px 8px;font-weight:700;font-size:0.86rem;min-width:40px;text-align:center;}
@@ -275,6 +279,18 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .user-pill-email{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
 .user-pill-logout{background:none;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;font-weight:700;padding:2px 4px;}
 
+
+/* ══ SPINNING WHEEL ══ */
+#wheel-modal .modal{max-width:420px;text-align:center;overflow:hidden;}
+.wheel-container{position:relative;width:300px;height:300px;margin:0 auto 16px;}
+.wheel-canvas{border-radius:50%;box-shadow:0 4px 24px #0006;}
+.wheel-pointer{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.2rem;z-index:10;pointer-events:none;filter:drop-shadow(0 2px 4px #000a);}
+.wheel-winner{font-size:1.5rem;font-weight:800;color:var(--gold);min-height:40px;margin:10px 0 4px;transition:all 0.3s;}
+.wheel-winner-sub{font-size:0.8rem;color:var(--text2);margin-bottom:12px;min-height:18px;}
+.wheel-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.wheel-remaining{font-size:0.78rem;color:var(--text2);margin-top:10px;}
+@keyframes confettiPop{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-60px) scale(0.4);}}
+.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none;animation:confettiPop 0.9s ease forwards;}
 /* ══ SUBJECT SELECTOR ══ */
 .subject-select-row{display:flex;gap:6px;align-items:center;margin-bottom:8px;}
 .subject-select-row select{flex:1;font-size:0.88rem;padding:6px 9px;}
@@ -422,6 +438,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 </div>
 
 <!-- HEADER -->
+<div id="offline-banner">📡 غير متصل بالأنترنت — البيانات تتحفظ محلياً وتتزامن تلقائياً لما يرجع الاتصال</div>
 <div class="header">
   <button class="header-menu-btn" onclick="openSidebar()">☰</button>
   <div>
@@ -459,6 +476,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
     <div class="card">
       <div class="card-title">
         <span>👥 قائمة التلاميذ — <span id="trim-label">الثلاثي الأول</span></span>
+        <button class="btn btn-outline btn-sm" onclick="openWheel()" title="عجلة الأسماء" style="margin-right:auto">🎡 عجلة</button>
       </div>
 
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
@@ -701,6 +719,38 @@ function getCData(cid){const yd=getYearData();if(!yd)return null;const id=cid||c
 function getStudents(cid){const d=getCData(cid);return d?d.students:[];}
 function getClasses(){const yd=getYearData();return yd?yd.classes:[];}
 
+// ── 24: format student timestamp ──
+function formatStudentTs(isoStr){
+  if(!isoStr)return '';
+  const d=new Date(isoStr);
+  const now=new Date();
+  const diff=Math.floor((now-d)/60000); // minutes
+  if(diff<1)return 'الآن';
+  if(diff<60)return 'منذ '+diff+' د';
+  if(diff<1440)return 'منذ '+Math.floor(diff/60)+' س';
+  return d.toLocaleDateString('ar-TN');
+}
+function getStudentTs(sid,trim,cid){
+  const d=getCData(cid||currentClassId);
+  if(!d||!d.notes)return null;
+  // stored under notes._ts
+  return d.notes['_ts_'+sid+'_'+trim]||null;
+}
+
+// ── 21: Offline indicator ──
+function updateOnlineStatus(){
+  const banner=document.getElementById('offline-banner');
+  if(!banner)return;
+  if(navigator.onLine){
+    banner.classList.remove('show');
+  } else {
+    banner.classList.add('show');
+  }
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+document.addEventListener('DOMContentLoaded', updateOnlineStatus);
+
 function saveAll(){
   localStorage.setItem('allData',JSON.stringify(allData));
   localStorage.setItem('lastEdit',new Date().toISOString());
@@ -914,6 +964,9 @@ function bufferNote(sid,trim,field,val,snapCid,inputEl){
   if(!pendingNotes[cid][sid])pendingNotes[cid][sid]={};
   if(!pendingNotes[cid][sid][trim])pendingNotes[cid][sid][trim]={};
   pendingNotes[cid][sid][trim][field]=val;
+  // 24: timestamp آخر تعديل per تلميذ
+  if(!pendingNotes[cid][sid]._ts)pendingNotes[cid][sid]._ts={};
+  pendingNotes[cid][sid]._ts[trim]=new Date().toISOString();
   markUnsaved();
   if(cid===currentClassId){
     const el=document.getElementById('badge-'+sid+'-'+trim);
@@ -927,8 +980,15 @@ function flushPending(){
     if(!yd.classData[cid])yd.classData[cid]={students:[],notes:{},nextId:1};
     const d=yd.classData[cid];
     Object.keys(pendingNotes[cid]).forEach(function(sid){
+      if(sid==='_ts')return; // skip meta
       const sn=parseInt(sid);if(!d.notes[sn])d.notes[sn]={};
       Object.keys(pendingNotes[cid][sid]).forEach(function(trim){
+        if(trim==='_ts'){
+          // save timestamps
+          if(!d.notes[sn]._ts)d.notes[sn]._ts={};
+          Object.assign(d.notes[sn]._ts, pendingNotes[cid][sid]._ts||{});
+          return;
+        }
         if(!d.notes[sn]['t'+trim])d.notes[sn]['t'+trim]={};
         Object.assign(d.notes[sn]['t'+trim],pendingNotes[cid][sid][trim]);
       });
@@ -1148,7 +1208,10 @@ function renderTable(){
       <td>${i+1}</td>
       <td>${s.nom}</td>
       ${comps.map(c=>`<td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,c.id,sc)}" oninput="bufferNote(${s.id},${st},'${c.id}',this.value,'${sc}',this)" placeholder="—"/></td>`).join('')}
-      <td id="badge-${s.id}-${st}">${badgeHTML(moyenne(s.id,st,sc))}</td>
+      <td id="badge-${s.id}-${st}">
+        ${badgeHTML(moyenne(s.id,st,sc))}
+        ${(()=>{const d=getCData(sc);const ts=d&&d.notes[s.id]&&d.notes[s.id]._ts&&d.notes[s.id]._ts[st];return ts?`<span class="student-ts">${formatStudentTs(ts)}</span>`:''})()}
+      </td>
     </tr>`).join('');
   renderStats();renderChart();
 }
@@ -2329,6 +2392,170 @@ function goToClass(cid){
   if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
+
+// ══════════════════════════════════════
+//  SPINNING WHEEL
+// ══════════════════════════════════════
+let wheelStudents=[];   // remaining students
+let wheelUsed=[];       // already picked
+let wheelSpinning=false;
+let wheelAngle=0;       // current rotation in radians
+let wheelColors=['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#00bcd4','#8bc34a','#ff5722','#607d8b'];
+
+function openWheel(){
+  const students=getStudents();
+  if(!students.length){alert('ما فماش تلاميذ في هذا القسم!');return;}
+  wheelStudents=[...students];
+  wheelUsed=[];
+  wheelAngle=0;
+  drawWheel();
+  updateWheelUI();
+  document.getElementById('wheel-modal').classList.add('open');
+}
+
+function resetWheel(){
+  wheelStudents=[...getStudents()];
+  wheelUsed=[];
+  wheelAngle=0;
+  document.getElementById('wheel-winner').textContent='';
+  document.getElementById('wheel-winner-sub').textContent='';
+  document.getElementById('wheel-spin-btn').disabled=false;
+  drawWheel();
+  updateWheelUI();
+}
+
+function updateWheelUI(){
+  const rem=wheelStudents.length;
+  const total=wheelStudents.length+wheelUsed.length;
+  const el=document.getElementById('wheel-remaining');
+  if(el){
+    if(wheelUsed.length===0){
+      el.textContent='';
+    } else {
+      el.textContent='متبقي: '+rem+' / '+total+' — خرجو: '+wheelUsed.map(s=>s.nom).join('، ');
+    }
+  }
+  const btn=document.getElementById('wheel-spin-btn');
+  if(btn)btn.disabled=(rem===0||wheelSpinning);
+}
+
+function drawWheel(){
+  const canvas=document.getElementById('wheel-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const cx=W/2, cy=H/2, r=W/2-4;
+  ctx.clearRect(0,0,W,H);
+
+  const students=wheelStudents;
+  if(!students.length){
+    ctx.fillStyle='#333';
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font='bold 16px Arial';ctx.textAlign='center';
+    ctx.fillText('لا يوجد تلاميذ',cx,cy);
+    return;
+  }
+
+  const n=students.length;
+  const arc=(Math.PI*2)/n;
+
+  students.forEach(function(s,i){
+    const start=wheelAngle+i*arc;
+    const end=start+arc;
+    // slice
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,end);
+    ctx.closePath();
+    ctx.fillStyle=wheelColors[i%wheelColors.length];
+    ctx.fill();
+    ctx.strokeStyle='#fff2';ctx.lineWidth=1.5;ctx.stroke();
+
+    // text
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start+arc/2);
+    ctx.textAlign='right';
+    ctx.fillStyle='#fff';
+    ctx.font='bold '+Math.min(13,Math.max(9,Math.floor(180/n)))+'px "Amiri",serif';
+    ctx.shadowColor='#0006';ctx.shadowBlur=3;
+    // trim long names
+    let name=s.nom;if(name.length>14)name=name.substring(0,13)+'…';
+    ctx.fillText(name, r-10, 4);
+    ctx.restore();
+  });
+
+  // center circle
+  ctx.beginPath();ctx.arc(cx,cy,18,0,Math.PI*2);
+  ctx.fillStyle='var(--gold,#c8a45a)';ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+}
+
+function spinWheel(){
+  if(wheelSpinning||!wheelStudents.length)return;
+  wheelSpinning=true;
+  document.getElementById('wheel-spin-btn').disabled=true;
+  document.getElementById('wheel-winner').textContent='';
+  document.getElementById('wheel-winner-sub').textContent='';
+
+  const n=wheelStudents.length;
+  const arc=(Math.PI*2)/n;
+
+  // pick random winner index
+  const winnerIdx=Math.floor(Math.random()*n);
+
+  // total spin: 5-8 full rotations + align winner to top (pointer at -PI/2)
+  const extraSpins=(5+Math.random()*3)*Math.PI*2;
+  // angle so winner slice center points up
+  // pointer is at top = -PI/2
+  // winner slice center at wheelAngle + winnerIdx*arc + arc/2
+  // we want that to equal -PI/2 (mod 2PI)
+  const targetAngle= -Math.PI/2 - (winnerIdx*arc + arc/2);
+  const totalSpin=extraSpins + ((targetAngle - wheelAngle%(Math.PI*2) + Math.PI*4)%(Math.PI*2));
+
+  const startAngle=wheelAngle;
+  const endAngle=startAngle+totalSpin;
+  const duration=3000+Math.random()*2000; // 3-5s
+  const startTime=performance.now();
+
+  function easeOut(t){return 1-Math.pow(1-t,4);}
+
+  function frame(now){
+    const elapsed=now-startTime;
+    const t=Math.min(elapsed/duration,1);
+    wheelAngle=startAngle+totalSpin*easeOut(t);
+    drawWheel();
+    if(t<1){
+      requestAnimationFrame(frame);
+    } else {
+      wheelAngle=endAngle;
+      wheelSpinning=false;
+      // announce winner
+      const winner=wheelStudents[winnerIdx];
+      wheelUsed.push(winner);
+      wheelStudents.splice(winnerIdx,1);
+      document.getElementById('wheel-winner').textContent='🎉 '+winner.nom;
+      document.getElementById('wheel-winner-sub').textContent=wheelStudents.length>0?'تم إزالة الاسم من العجلة':'🏆 كل التلاميذ خرجو!';
+      if(wheelStudents.length>0)drawWheel();
+      updateWheelUI();
+      spawnConfetti();
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function spawnConfetti(){
+  const modal=document.querySelector('#wheel-modal .modal');
+  if(!modal)return;
+  const colors=['#f1c40f','#e74c3c','#2ecc71','#3498db','#9b59b6','#e67e22'];
+  for(let i=0;i<18;i++){
+    const el=document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText='left:'+(20+Math.random()*60)+'%;top:'+(30+Math.random()*30)+'%;background:'+colors[Math.floor(Math.random()*colors.length)]+';animation-delay:'+(Math.random()*0.4)+'s;position:absolute;';
+    modal.appendChild(el);
+    setTimeout(()=>el.remove(),1200);
+  }
+}
 </script>
 
 <!-- GLOBAL SEARCH MODAL -->
@@ -2338,6 +2565,24 @@ function goToClass(cid){
     <input type="text" id="global-search-inp" placeholder="اكتب اسم التلميذ..." oninput="runGlobalSearch()" style="margin-bottom:12px;font-size:1rem"/>
     <div id="global-search-results" style="max-height:340px;overflow-y:auto"></div>
     <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="closeModal('global-search-modal')">إغلاق</button>
+  </div>
+</div>
+<!-- WHEEL MODAL -->
+<div class="modal-overlay" id="wheel-modal">
+  <div class="modal" style="max-width:380px;text-align:center;position:relative">
+    <div class="modal-title">🎡 عجلة الأسماء</div>
+    <div class="wheel-container">
+      <canvas id="wheel-canvas" class="wheel-canvas" width="300" height="300"></canvas>
+      <div class="wheel-pointer">⬆️</div>
+    </div>
+    <div class="wheel-winner" id="wheel-winner"></div>
+    <div class="wheel-winner-sub" id="wheel-winner-sub"></div>
+    <div class="wheel-btns">
+      <button class="btn btn-gold" id="wheel-spin-btn" onclick="spinWheel()">🎲 دور!</button>
+      <button class="btn btn-outline btn-sm" onclick="resetWheel()">🔄 إعادة تعيين</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('wheel-modal')">✕ إغلاق</button>
+    </div>
+    <div class="wheel-remaining" id="wheel-remaining"></div>
   </div>
 </div>
 </body>
