@@ -328,7 +328,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .cahier-fields{display:flex;flex-direction:column;gap:4px;}
 .cahier-field{display:flex;gap:6px;font-size:0.82rem;flex-wrap:wrap;}
 .cahier-field-label{color:var(--text2);min-width:90px;flex-shrink:0;}
-.cahier-field-val{color:var(--text);}
+.cahier-field-val{color:var(--text);direction:ltr;text-align:left;}
 .cahier-hw-badge{display:inline-block;background:#e74c3c22;border:1px solid #e74c3c66;color:#e74c3c;border-radius:8px;padding:3px 10px;font-size:0.8rem;margin-top:6px;}
 .cahier-del-btn{position:absolute;top:10px;left:10px;background:none;border:none;color:var(--text2);font-size:0.9rem;cursor:pointer;opacity:0.5;transition:opacity 0.2s;}
 .cahier-del-btn:hover{opacity:1;color:var(--red);}
@@ -694,7 +694,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
           </div>
           <div class="form-group">
             <label>🕐 التوقيت</label>
-            <input type="text" id="cahier-time" placeholder="مثال: 14h-15h"/>
+            <input type="text" id="cahier-time" placeholder="مثال: 14h-15h"/ style="direction:ltr;text-align:left">
           </div>
           <div class="form-group">
             <label>🏫 القسم</label>
@@ -703,33 +703,33 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         </div>
         <div class="form-group">
           <label>📚 الوحدة — Unit</label>
-          <input type="text" id="cahier-unit" placeholder="مثال: Unit 3 — Entertainment"/>
+          <input type="text" id="cahier-unit" placeholder="مثال: Unit 3 — Entertainment"/ style="direction:ltr;text-align:left">
         </div>
         <div class="form-group">
           <label>📖 الدرس — Lesson</label>
-          <input type="text" id="cahier-lesson" placeholder="عنوان الدرس"/>
+          <input type="text" id="cahier-lesson" placeholder="عنوان الدرس"/ style="direction:ltr;text-align:left">
         </div>
         <div class="form-group">
           <label>🎯 الأهداف — Objectives</label>
-          <textarea id="cahier-objectives" rows="2" placeholder="By the end of the lesson, students will be able to..."></textarea>
+          <textarea id="cahier-objectives" rows="2" placeholder="By the end of the lesson, students will be able to..." style="direction:ltr;text-align:left"></textarea>
         </div>
         <div class="cahier-row">
           <div class="form-group">
             <label>🗣️ المهارات — Skills</label>
-            <input type="text" id="cahier-skills" placeholder="Reading / Writing / Speaking..."/>
+            <input type="text" id="cahier-skills" placeholder="Reading / Writing / Speaking..."/ style="direction:ltr;text-align:left">
           </div>
           <div class="form-group">
             <label>🏗️ التراكيب — Structure</label>
-            <input type="text" id="cahier-structure" placeholder="مثال: Present Perfect"/>
+            <input type="text" id="cahier-structure" placeholder="مثال: Present Perfect"/ style="direction:ltr;text-align:left">
           </div>
         </div>
         <div class="form-group">
           <label>📝 المفردات — Vocabulary</label>
-          <input type="text" id="cahier-vocab" placeholder="مثال: entertain, leisure, broadcast..."/>
+          <input type="text" id="cahier-vocab" placeholder="مثال: entertain, leisure, broadcast..."/ style="direction:ltr;text-align:left">
         </div>
         <div class="form-group">
           <label>📌 الواجب — Homework <span style="color:var(--text2);font-size:0.78rem">(اختياري)</span></label>
-          <input type="text" id="cahier-hw" placeholder="ان وجد..."/>
+          <input type="text" id="cahier-hw" placeholder="ان وجد..."/ style="direction:ltr;text-align:left">
         </div>
         <button class="btn btn-gold btn-full" onclick="addCahierEntry()">💾 حفظ الحصة</button>
       </div>
@@ -2806,12 +2806,12 @@ function renderCahier(){
         ${e.time?`<span class="cahier-time-badge">🕐 ${e.time}</span>`:''}
         <span class="cahier-class-badge">🏫 ${e.className}</span>
       </div>
-      ${e.unit?`<div class="cahier-unit-label">📚 ${e.unit}</div>`:''}
-      <div class="cahier-lesson-title">📖 ${e.lesson}</div>
+      ${e.unit?`<div class="cahier-unit-label" style="direction:ltr;text-align:left">📚 ${e.unit}</div>`:''}
+      <div class="cahier-lesson-title" style="direction:ltr;text-align:left">📖 ${e.lesson}</div>
       <div class="cahier-fields">
         ${fields.map(f=>`<div class="cahier-field"><span class="cahier-field-label">${f.label}</span><span class="cahier-field-val">${f.val}</span></div>`).join('')}
       </div>
-      ${e.hw?`<div class="cahier-hw-badge">📌 HW: ${e.hw}</div>`:''}
+      ${e.hw?`<div class="cahier-hw-badge" style="direction:ltr;text-align:left">📌 HW: ${e.hw}</div>`:''}
     </div>`;
   }).join('');
 }
