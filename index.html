@@ -137,6 +137,7 @@ body.light .stbl th{background:#b07830;color:#ffffff;}
 /* ══ NOTE INPUT ══ */
 .note-input{width:62px;padding:5px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Amiri',serif;font-size:0.9rem;text-align:center;transition:border 0.2s;}
 .note-input:focus{border-color:var(--gold);outline:none;}
+.note-input.invalid{border-color:var(--red)!important;background:rgba(220,50,50,0.10);}
 
 /* ══ BADGES ══ */
 .badge{display:inline-block;border-radius:7px;padding:2px 8px;font-weight:700;font-size:0.86rem;min-width:40px;text-align:center;}
@@ -459,7 +460,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
       </div>
 
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
-        <input type="text" id="search-input" placeholder="🔍 ابحث..." oninput="renderTable()" style="flex:1;min-width:100px"/>
+        <input type="text" id="search-input" placeholder="🔍 ابحث في القسم..." oninput="renderTable()" style="flex:1;min-width:100px"/><button class="btn btn-outline btn-sm" onclick="openGlobalSearch()" title="بحث في كل الأقسام">🌐</button>
         <input type="text" id="new-nom" placeholder="اسم التلميذ الجديد..." onkeydown="if(event.key==='Enter')addStudent()" style="flex:2;min-width:120px"/>
         <button class="btn btn-gold btn-sm" onclick="addStudent()">+ إضافة</button>
         <button class="btn btn-outline btn-sm" onclick="openImportModal()">📋 قائمة</button>
@@ -895,8 +896,18 @@ function saveSubjectSettings(){if(typeof schedulePush==='function')schedulePush(
 // ══════════════════════════════════════
 //  NOTES
 // ══════════════════════════════════════
-function bufferNote(sid,trim,field,val,snapCid){
+function bufferNote(sid,trim,field,val,snapCid,inputEl){
   const cid=snapCid||currentClassId;
+  // validate & clamp
+  if(inputEl){
+    const num=parseFloat(val);
+    if(val!==''&&(isNaN(num)||num<0||num>20)){
+      inputEl.classList.add('invalid');
+    } else {
+      inputEl.classList.remove('invalid');
+      if(!isNaN(num)&&val!==''){val=Math.min(20,Math.max(0,num));}
+    }
+  }
   if(!pendingNotes[cid])pendingNotes[cid]={};
   if(!pendingNotes[cid][sid])pendingNotes[cid][sid]={};
   if(!pendingNotes[cid][sid][trim])pendingNotes[cid][sid][trim]={};
@@ -1019,7 +1030,7 @@ function renderClassList(){
   const list=document.getElementById('sidebar-class-list');
   if(!list)return;
   list.innerHTML=classes.map(c=>`
-    <div class="class-item ${c.id===currentClassId?'active':''}" onclick="switchClass('${c.id}');closeSidebar()">
+    <div class="class-item ${c.id===currentClassId?'active':''}" data-id="${c.id}" onclick="switchClass('${c.id}');closeSidebar()">
       <span class="class-item-name">${c.name}</span>
       <div class="class-item-actions">
         <button class="class-item-btn" onclick="event.stopPropagation();renameClassPrompt('${c.id}')" title="تسمية">✏️</button>
@@ -1129,7 +1140,7 @@ function renderTable(){
     <tr>
       <td>${i+1}</td>
       <td>${s.nom}</td>
-      ${comps.map(c=>`<td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,c.id,sc)}" oninput="bufferNote(${s.id},${st},'${c.id}',this.value,'${sc}')" placeholder="—"/></td>`).join('')}
+      ${comps.map(c=>`<td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,c.id,sc)}" oninput="bufferNote(${s.id},${st},'${c.id}',this.value,'${sc}',this)" placeholder="—"/></td>`).join('')}
       <td id="badge-${s.id}-${st}">${badgeHTML(moyenne(s.id,st,sc))}</td>
     </tr>`).join('');
   renderStats();renderChart();
@@ -2263,7 +2274,65 @@ fbAuth.onAuthStateChanged(async function(user){
 window.addEventListener('beforeunload', function(){
   if(unsaved && currentUser){ flushPending(); }
 });
+
+// ══ GLOBAL SEARCH ══
+function openGlobalSearch(){
+  document.getElementById('global-search-inp').value='';
+  document.getElementById('global-search-results').innerHTML='<div style="color:var(--text2);text-align:center;padding:20px">اكتب اسم التلميذ للبحث</div>';
+  document.getElementById('global-search-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('global-search-inp').focus(),100);
+}
+
+function runGlobalSearch(){
+  const q=document.getElementById('global-search-inp').value.trim().toLowerCase();
+  const res=document.getElementById('global-search-results');
+  if(q.length<2){res.innerHTML='<div style="color:var(--text2);text-align:center;padding:20px">اكتب حرفين على الأقل</div>';return;}
+  const classes=getClasses();
+  let found=[];
+  classes.forEach(function(cl){
+    const students=getStudents(cl.id);
+    students.filter(s=>s.nom.toLowerCase().includes(q)).forEach(function(s){
+      const moyennes=[1,2,3].map(t=>{const m=moyenne(s.id,t,cl.id);return m?'<span style="color:var(--gold)">'+m+'</span>':'—';});
+      found.push({className:cl.name,classId:cl.id,nom:s.nom,sid:s.id,moyennes});
+    });
+  });
+  if(!found.length){res.innerHTML='<div style="color:var(--text2);text-align:center;padding:20px">لا توجد نتائج</div>';return;}
+  res.innerHTML=found.map(function(r){
+    return `<div style="padding:10px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:0.98rem;font-weight:700">${r.nom}</div>
+        <div style="font-size:0.78rem;color:var(--text2)">${r.className}</div>
+      </div>
+      <div style="font-size:0.8rem;display:flex;gap:10px;align-items:center">
+        <span title="الثلاثي الأول">ث١: ${r.moyennes[0]}</span>
+        <span title="الثلاثي الثاني">ث٢: ${r.moyennes[1]}</span>
+        <span title="الثلاثي الثالث">ث٣: ${r.moyennes[2]}</span>
+        <button class="btn btn-outline btn-sm" onclick="goToClass('${r.classId}')">انتقل ←</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goToClass(cid){
+  closeModal('global-search-modal');
+  currentClassId=cid;
+  renderClassList();renderTable();updateHeaderPill();
+  // scroll to class in sidebar
+  const el=document.querySelector('.class-item[data-id="'+cid+'"]');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
 </script>
+
+<!-- GLOBAL SEARCH MODAL -->
+<div class="modal-overlay" id="global-search-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">🌐 بحث في كل الأقسام</div>
+    <input type="text" id="global-search-inp" placeholder="اكتب اسم التلميذ..." oninput="runGlobalSearch()" style="margin-bottom:12px;font-size:1rem"/>
+    <div id="global-search-results" style="max-height:340px;overflow-y:auto"></div>
+    <button class="btn btn-danger btn-sm" style="margin-top:10px" onclick="closeModal('global-search-modal')">إغلاق</button>
+  </div>
+</div>
 </body>
 </html>
 
