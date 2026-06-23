@@ -121,6 +121,9 @@ body.light .btn-danger{background:#ffe8e8;color:#c03020;border-color:#c0302055;}
 .btn-save:hover{filter:brightness(1.1);}
 .btn-sm{padding:5px 11px;font-size:0.82rem;}
 .btn-full{width:100%;justify-content:center;}
+.lang-btn{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border);font-family:sans-serif;font-size:0.75rem;}
+.lang-btn:hover{border-color:var(--gold);color:var(--gold);}
+.lang-btn.active{background:var(--gold)22;border-color:var(--gold);color:var(--gold);font-weight:700;}
 
 /* ══ TABLE ══ */
 .stbl{width:100%;border-collapse:collapse;}
@@ -488,6 +491,11 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
       <input type="file" id="import-json-input" accept=".json" style="display:none" onchange="importJSON(event)"/>
     </div>
 <button onclick="toggleTheme()" id="theme-btn" class="btn btn-outline btn-sm btn-full">☀️ الوضع الفاتح</button>
+    <div style="display:flex;gap:6px;margin-top:7px">
+      <button onclick="setLang('ar')" id="lang-btn-ar" class="btn btn-sm lang-btn" style="flex:1">🇹🇳 عربي</button>
+      <button onclick="setLang('fr')" id="lang-btn-fr" class="btn btn-sm lang-btn" style="flex:1">🇫🇷 FR</button>
+      <button onclick="setLang('en')" id="lang-btn-en" class="btn btn-sm lang-btn" style="flex:1">🇬🇧 EN</button>
+    </div>
     <div class="last-edit" id="last-edit-display">—</div>
   </div>
 </div>
@@ -892,13 +900,14 @@ function updateLastEdit(){
   if(!el)return;
   if(!raw){el.textContent='—';return;}
   const d=new Date(raw);
-  el.textContent='آخر حفظ: '+d.toLocaleDateString('ar-TN')+' '+d.toLocaleTimeString('ar-TN',{hour:'2-digit',minute:'2-digit'});
+  const locale=currentLang==='ar'?'ar-TN':currentLang==='fr'?'fr-FR':'en-GB';
+  el.textContent=t('last_save')+d.toLocaleDateString(locale)+' '+d.toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'});
 }
 
 function manualSave(){
   flushPending();saveAll();
   const btns=document.querySelectorAll('.btn-save');
-  btns.forEach(b=>{const o=b.textContent;b.textContent='✅ تم الحفظ';setTimeout(()=>b.textContent=o,1500);});
+  btns.forEach(b=>{const o=b.textContent;b.textContent=t('saved_ok');setTimeout(()=>b.textContent=o,1500);});
 }
 
 // ══════════════════════════════════════
@@ -912,10 +921,460 @@ function closeSidebar(){document.getElementById('sidebar').classList.remove('ope
 // ══════════════════════════════════════
 function applyTheme(){
   const btn=document.getElementById('theme-btn');
-  if(isDark){document.body.classList.remove('light');if(btn)btn.textContent='☀️ الوضع الفاتح';}
-  else{document.body.classList.add('light');if(btn)btn.textContent='🌙 الوضع الداكن';}
+  if(isDark){document.body.classList.remove('light');if(btn)btn.textContent=t('sidebar_theme_dark');}
+  else{document.body.classList.add('light');if(btn)btn.textContent=t('sidebar_theme_light');}
 }
 function toggleTheme(){isDark=!isDark;localStorage.setItem('theme',isDark?'dark':'light');applyTheme();}
+
+// ══════════════════════════════════════
+//  I18N — LANGUAGE SYSTEM
+// ══════════════════════════════════════
+const TRANSLATIONS = {
+  ar: {
+    dir:'rtl', htmlLang:'ar',
+    // Auth
+    auth_title:'مساعد الأستاذ',
+    auth_sub_login:'سجل الدخول لمتابعة عملك',
+    auth_sub_register:'أنشئ حسابك الجديد',
+    auth_email:'البريد الإلكتروني',
+    auth_pass:'كلمة السر',
+    auth_pass2:'تأكيد كلمة السر',
+    auth_submit_login:'دخول',
+    auth_submit_register:'تسجيل',
+    auth_forgot:'نسيت كلمة السر؟',
+    auth_switch_login:'ما عندكش حساب؟',
+    auth_switch_link_login:'سجل حساب جديد',
+    auth_switch_register:'عندك حساب؟',
+    auth_switch_link_register:'دخول',
+    // Header
+    header_title:'مساعد الأستاذ',
+    header_sub:'متابعة التلاميذ · سجل الغياب',
+    offline_banner:'📡 غير متصل بالأنترنت — البيانات تتحفظ محلياً وتتزامن تلقائياً لما يرجع الاتصال',
+    // Nav
+    nav_students:'👥 التلاميذ',
+    nav_annual:'📊 ملخص سنوي',
+    nav_rapport:'📈 تقرير',
+    nav_absence:'📋 سجل الغياب',
+    nav_cahier:'📓 كراس القسم',
+    // Sidebar
+    sidebar_title:'📚 مساعد الأستاذ',
+    sidebar_year:'السنة الدراسية',
+    sidebar_teacher_info:'معلومات الأستاذ',
+    sidebar_institution:'🏫 المؤسسة',
+    sidebar_institution_ph:'اسم المؤسسة...',
+    sidebar_teacher:'👤 الأستاذ',
+    sidebar_teacher_ph:'الاسم واللقب...',
+    sidebar_subject:'المادة',
+    sidebar_classes:'الأقسام',
+    sidebar_add_class:'+ قسم جديد',
+    sidebar_add_subject:'+ مادة جديدة',
+    sidebar_gist:'☁️ مزامنة GitHub Gist',
+    sidebar_gist_upload:'⬆️ رفع البيانات',
+    sidebar_gist_download:'⬇️ تحميل البيانات',
+    sidebar_gist_settings:'⚙️ إعدادات Gist',
+    sidebar_logout:'خروج',
+    sidebar_save:'💾 حفظ',
+    sidebar_export:'⬇️ JSON',
+    sidebar_import:'⬆️ استيراد',
+    sidebar_theme_dark:'☀️ الوضع الفاتح',
+    sidebar_theme_light:'🌙 الوضع الداكن',
+    // Save banner
+    save_banner_msg:'⚠️ أعداد غير محفوظة',
+    save_now:'💾 احفظ الآن',
+    // Students page
+    trim1:'📘 الثلاثي الأول',
+    trim2:'📗 الثلاثي الثاني',
+    trim3:'📙 الثلاثي الثالث',
+    students_title:'👥 قائمة التلاميذ — ',
+    search_ph:'🔍 ابحث في القسم...',
+    new_student_ph:'اسم التلميذ الجديد...',
+    btn_add:'+ إضافة',
+    btn_list:'📋 قائمة',
+    btn_word:'📄 Word',
+    col_name:'الاسم واللقب',
+    btn_save_grades:'💾 حفظ الأعداد',
+    btn_edit_list:'✏️ تعديل القائمة',
+    btn_transfer:'🔄 نقل أعداد',
+    chart_title:'📊 توزيع النقاط',
+    empty_students:'ما فماش تلاميذ 👆',
+    // Annual page
+    annual_title:'📊 الملخص السنوي',
+    annual_col_t1:'معدل ث1', annual_col_t2:'معدل ث2', annual_col_t3:'معدل ث3',
+    annual_col_annual:'السنوي', annual_col_result:'النتيجة',
+    annual_empty:'أدخل نقاط التلاميذ أولاً',
+    // Rapport page
+    rapport_col_grade:'النقطة /20',
+    rapport_col_mean:'المعدل /20',
+    rapport_col_result:'النتيجة',
+    rapport_chart_title:'📊 توزيع النقاط',
+    rapport_table_title:'قائمة النقاط',
+    rapport_export:'📄 تصدير Word',
+    rapport_empty:'ما فماش أعداد مدخلة',
+    // Absence page
+    absence_title:'📋 سجل الغياب',
+    absence_year_label:'السنة:',
+    absence_add_year:'+ سنة',
+    absence_days_label:'أيام الغياب',
+    absence_of_30:'من أصل 30',
+    absence_remaining:'30 متبقي',
+    absence_warning:'⚠️ اقتربت من الحدّ!',
+    absence_exceeded:'🚨 تجاوزت 30 يوم!',
+    absence_add_title:'➕ تسجيل غياب',
+    absence_date_label:'التاريخ',
+    absence_reason_label:'السبب',
+    absence_reason_ph:'مرض، مأمورية...',
+    absence_submit:'تسجيل',
+    absence_log_title:'📋 السجل',
+    absence_log_empty:'ما فماش غياب مسجّل',
+    // Cahier page
+    cahier_time_ph:'مثال: 14h-15h',
+    cahier_unit_ph:'مثال: Unit 3 — Entertainment',
+    cahier_lesson_ph:'عنوان الدرس',
+    cahier_hw_ph:'ان وجد...',
+    cahier_search_ph:'🔍 ابحث في الدروس...',
+    // Misc
+    cahier_empty:'ما فماش حصص مسجّلة',
+    last_save:'آخر حفظ: ',
+    saved_ok:'✅ تم الحفظ',
+    btn_wheel:'🎡 عجلة',
+  },
+  fr: {
+    dir:'ltr', htmlLang:'fr',
+    auth_title:'Assistant Prof',
+    auth_sub_login:'Connectez-vous pour continuer',
+    auth_sub_register:'Créez votre nouveau compte',
+    auth_email:'E-mail',
+    auth_pass:'Mot de passe',
+    auth_pass2:'Confirmer le mot de passe',
+    auth_submit_login:'Connexion',
+    auth_submit_register:'Inscription',
+    auth_forgot:'Mot de passe oublié ?',
+    auth_switch_login:'Pas encore de compte ?',
+    auth_switch_link_login:'Créer un compte',
+    auth_switch_register:'Déjà un compte ?',
+    auth_switch_link_register:'Se connecter',
+    header_title:'Assistant Prof',
+    header_sub:'Suivi des élèves · Registre d\'absences',
+    offline_banner:'📡 Hors ligne — Les données sont sauvegardées localement et se synchroniseront automatiquement',
+    nav_students:'👥 Élèves',
+    nav_annual:'📊 Bilan annuel',
+    nav_rapport:'📈 Rapport',
+    nav_absence:'📋 Absences',
+    nav_cahier:'📓 Cahier de classe',
+    sidebar_title:'📚 Assistant Prof',
+    sidebar_year:'Année scolaire',
+    sidebar_teacher_info:'Informations',
+    sidebar_institution:'🏫 Établissement',
+    sidebar_institution_ph:'Nom de l\'établissement...',
+    sidebar_teacher:'👤 Enseignant',
+    sidebar_teacher_ph:'Nom et prénom...',
+    sidebar_subject:'Matière',
+    sidebar_classes:'Classes',
+    sidebar_add_class:'+ Nouvelle classe',
+    sidebar_add_subject:'+ Nouvelle matière',
+    sidebar_gist:'☁️ Sync GitHub Gist',
+    sidebar_gist_upload:'⬆️ Envoyer',
+    sidebar_gist_download:'⬇️ Télécharger',
+    sidebar_gist_settings:'⚙️ Paramètres Gist',
+    sidebar_logout:'Déconnexion',
+    sidebar_save:'💾 Enregistrer',
+    sidebar_export:'⬇️ JSON',
+    sidebar_import:'⬆️ Importer',
+    sidebar_theme_dark:'☀️ Mode clair',
+    sidebar_theme_light:'🌙 Mode sombre',
+    save_banner_msg:'⚠️ Modifications non enregistrées',
+    save_now:'💾 Enregistrer',
+    trim1:'📘 1er Trimestre',
+    trim2:'📗 2ème Trimestre',
+    trim3:'📙 3ème Trimestre',
+    students_title:'👥 Liste des élèves — ',
+    search_ph:'🔍 Rechercher dans la classe...',
+    new_student_ph:'Nom du nouvel élève...',
+    btn_add:'+ Ajouter',
+    btn_list:'📋 Liste',
+    btn_word:'📄 Word',
+    col_name:'Nom et prénom',
+    btn_save_grades:'💾 Enregistrer',
+    btn_edit_list:'✏️ Modifier la liste',
+    btn_transfer:'🔄 Transférer notes',
+    chart_title:'📊 Répartition des notes',
+    empty_students:'Aucun élève 👆',
+    annual_title:'📊 Bilan annuel',
+    annual_col_t1:'Moy T1', annual_col_t2:'Moy T2', annual_col_t3:'Moy T3',
+    annual_col_annual:'Annuel', annual_col_result:'Résultat',
+    annual_empty:'Saisissez d\'abord les notes des élèves',
+    rapport_col_grade:'Note /20',
+    rapport_col_mean:'Moyenne /20',
+    rapport_col_result:'Résultat',
+    rapport_chart_title:'📊 Répartition des notes',
+    rapport_table_title:'Liste des notes',
+    rapport_export:'📄 Exporter Word',
+    rapport_empty:'Aucune note saisie',
+    absence_title:'📋 Registre d\'absences',
+    absence_year_label:'Année :',
+    absence_add_year:'+ Année',
+    absence_days_label:'Jours d\'absence',
+    absence_of_30:'sur 30',
+    absence_remaining:'30 restants',
+    absence_warning:'⚠️ Vous approchez de la limite !',
+    absence_exceeded:'🚨 Vous avez dépassé 30 jours !',
+    absence_add_title:'➕ Enregistrer une absence',
+    absence_date_label:'Date',
+    absence_reason_label:'Motif',
+    absence_reason_ph:'Maladie, mission...',
+    absence_submit:'Enregistrer',
+    absence_log_title:'📋 Journal',
+    absence_log_empty:'Aucune absence enregistrée',
+    cahier_time_ph:'Ex: 14h-15h',
+    cahier_unit_ph:'Ex: Unit 3 — Entertainment',
+    cahier_lesson_ph:'Titre de la leçon',
+    cahier_hw_ph:'Si applicable...',
+    cahier_search_ph:'🔍 Rechercher dans les leçons...',
+    cahier_empty:'Aucune séance enregistrée',
+    last_save:'Dernière sauvegarde : ',
+    saved_ok:'✅ Enregistré',
+    btn_wheel:'🎡 Roue',
+  },
+  en: {
+    dir:'ltr', htmlLang:'en',
+    auth_title:'Teacher\'s Assistant',
+    auth_sub_login:'Sign in to continue your work',
+    auth_sub_register:'Create your new account',
+    auth_email:'Email address',
+    auth_pass:'Password',
+    auth_pass2:'Confirm password',
+    auth_submit_login:'Sign in',
+    auth_submit_register:'Sign up',
+    auth_forgot:'Forgot password?',
+    auth_switch_login:'Don\'t have an account?',
+    auth_switch_link_login:'Create account',
+    auth_switch_register:'Already have an account?',
+    auth_switch_link_register:'Sign in',
+    header_title:'Teacher\'s Assistant',
+    header_sub:'Student tracking · Absence log',
+    offline_banner:'📡 Offline — Data is saved locally and will sync automatically when reconnected',
+    nav_students:'👥 Students',
+    nav_annual:'📊 Annual summary',
+    nav_rapport:'📈 Report',
+    nav_absence:'📋 Absence log',
+    nav_cahier:'📓 Class notebook',
+    sidebar_title:'📚 Teacher\'s Assistant',
+    sidebar_year:'School year',
+    sidebar_teacher_info:'Information',
+    sidebar_institution:'🏫 School',
+    sidebar_institution_ph:'School name...',
+    sidebar_teacher:'👤 Teacher',
+    sidebar_teacher_ph:'Full name...',
+    sidebar_subject:'Subject',
+    sidebar_classes:'Classes',
+    sidebar_add_class:'+ New class',
+    sidebar_add_subject:'+ New subject',
+    sidebar_gist:'☁️ GitHub Gist sync',
+    sidebar_gist_upload:'⬆️ Upload',
+    sidebar_gist_download:'⬇️ Download',
+    sidebar_gist_settings:'⚙️ Gist settings',
+    sidebar_logout:'Sign out',
+    sidebar_save:'💾 Save',
+    sidebar_export:'⬇️ JSON',
+    sidebar_import:'⬆️ Import',
+    sidebar_theme_dark:'☀️ Light mode',
+    sidebar_theme_light:'🌙 Dark mode',
+    save_banner_msg:'⚠️ Unsaved changes',
+    save_now:'💾 Save now',
+    trim1:'📘 Term 1',
+    trim2:'📗 Term 2',
+    trim3:'📙 Term 3',
+    students_title:'👥 Student list — ',
+    search_ph:'🔍 Search in class...',
+    new_student_ph:'New student name...',
+    btn_add:'+ Add',
+    btn_list:'📋 List',
+    btn_word:'📄 Word',
+    col_name:'Full name',
+    btn_save_grades:'💾 Save grades',
+    btn_edit_list:'✏️ Edit list',
+    btn_transfer:'🔄 Transfer grades',
+    chart_title:'📊 Grade distribution',
+    empty_students:'No students yet 👆',
+    annual_title:'📊 Annual summary',
+    annual_col_t1:'Avg T1', annual_col_t2:'Avg T2', annual_col_t3:'Avg T3',
+    annual_col_annual:'Annual', annual_col_result:'Result',
+    annual_empty:'Enter student grades first',
+    rapport_col_grade:'Score /20',
+    rapport_col_mean:'Average /20',
+    rapport_col_result:'Result',
+    rapport_chart_title:'📊 Grade distribution',
+    rapport_table_title:'Grade list',
+    rapport_export:'📄 Export Word',
+    rapport_empty:'No grades entered',
+    absence_title:'📋 Absence log',
+    absence_year_label:'Year:',
+    absence_add_year:'+ Year',
+    absence_days_label:'Absence days',
+    absence_of_30:'out of 30',
+    absence_remaining:'30 remaining',
+    absence_warning:'⚠️ Approaching the limit!',
+    absence_exceeded:'🚨 Exceeded 30 days!',
+    absence_add_title:'➕ Record absence',
+    absence_date_label:'Date',
+    absence_reason_label:'Reason',
+    absence_reason_ph:'Illness, mission...',
+    absence_submit:'Record',
+    absence_log_title:'📋 Log',
+    absence_log_empty:'No absences recorded',
+    cahier_time_ph:'e.g. 2pm-3pm',
+    cahier_unit_ph:'e.g. Unit 3 — Entertainment',
+    cahier_lesson_ph:'Lesson title',
+    cahier_hw_ph:'If applicable...',
+    cahier_search_ph:'🔍 Search lessons...',
+    cahier_empty:'No sessions recorded',
+    last_save:'Last saved: ',
+    saved_ok:'✅ Saved',
+    btn_wheel:'🎡 Wheel',
+  }
+};
+
+let currentLang = localStorage.getItem('lang') || 'ar';
+
+function t(key){ return (TRANSLATIONS[currentLang]||TRANSLATIONS.ar)[key] || TRANSLATIONS.ar[key] || key; }
+
+function setLang(lang){
+  currentLang = lang;
+  localStorage.setItem('lang', lang);
+  applyLang();
+}
+
+function applyLang(){
+  const L = TRANSLATIONS[currentLang] || TRANSLATIONS.ar;
+  document.documentElement.lang = L.htmlLang;
+  document.documentElement.dir = L.dir;
+  document.body.style.direction = L.dir;
+  // font: Arabic needs Amiri, Latin looks better with system font
+  document.body.style.fontFamily = currentLang==='ar' ? "'Amiri',serif" : "system-ui,'Segoe UI',sans-serif";
+
+  // Lang buttons highlight
+  ['ar','fr','en'].forEach(l=>{
+    const b=document.getElementById('lang-btn-'+l);
+    if(b) b.classList.toggle('active', l===currentLang);
+  });
+
+  // Auth screen
+  const authTitle=document.querySelector('.auth-title'); if(authTitle) authTitle.textContent=L.auth_title;
+  const authSub=document.getElementById('auth-mode-sub'); if(authSub) authSub.textContent=L.auth_sub_login;
+  // auth fields labels
+  const authFields=document.querySelectorAll('.auth-field label');
+  if(authFields[0]) authFields[0].textContent=L.auth_email;
+  if(authFields[1]) authFields[1].textContent=L.auth_pass;
+  if(authFields[2]) authFields[2].textContent=L.auth_pass2;
+  const authSubmit=document.getElementById('auth-submit-btn'); if(authSubmit) authSubmit.textContent=L.auth_submit_login;
+  const authForgot=document.querySelector('.auth-forgot a'); if(authForgot) authForgot.textContent=L.auth_forgot;
+  const authSwitchTxt=document.getElementById('auth-switch-text'); if(authSwitchTxt) authSwitchTxt.textContent=L.auth_switch_login;
+  const authSwitchLink=document.getElementById('auth-switch-link'); if(authSwitchLink) authSwitchLink.textContent=L.auth_switch_link_login;
+
+  // Header
+  const hTitle=document.querySelector('.header-title'); if(hTitle) hTitle.textContent=L.header_title;
+  const hSub=document.querySelector('.header-sub'); if(hSub) hSub.textContent=L.header_sub;
+  const offBanner=document.getElementById('offline-banner'); if(offBanner) offBanner.textContent=L.offline_banner;
+
+  // Nav
+  const navBtns=document.querySelectorAll('.nav-btn');
+  const navKeys=['nav_students','nav_annual','nav_rapport','nav_absence','nav_cahier'];
+  navBtns.forEach((b,i)=>{ if(navKeys[i]) b.textContent=L[navKeys[i]]; });
+
+  // Sidebar
+  const sTitle=document.querySelector('.sidebar-title'); if(sTitle) sTitle.textContent=L.sidebar_title;
+  const secTitles=document.querySelectorAll('.sidebar-section-title');
+  const secKeys=['sidebar_year','sidebar_teacher_info','sidebar_subject','sidebar_classes','sidebar_gist'];
+  secTitles.forEach((el,i)=>{ if(secKeys[i]) el.textContent=L[secKeys[i]]; });
+
+  const instLabel=document.querySelector('#institution-name')?.previousElementSibling; if(instLabel) instLabel.textContent=L.sidebar_institution;
+  const instInp=document.getElementById('institution-name'); if(instInp) instInp.placeholder=L.sidebar_institution_ph;
+  const teachLabel=document.querySelector('#teacher-name')?.previousElementSibling; if(teachLabel) teachLabel.textContent=L.sidebar_teacher;
+  const teachInp=document.getElementById('teacher-name'); if(teachInp) teachInp.placeholder=L.sidebar_teacher_ph;
+
+  const gistUp=document.getElementById('gist-upload-btn'); if(gistUp) gistUp.innerHTML='<span>⬆️</span> '+L.sidebar_gist_upload.replace('⬆️ ','');
+  const gistDown=document.getElementById('gist-download-btn'); if(gistDown) gistDown.innerHTML='<span>⬇️</span> '+L.sidebar_gist_download.replace('⬇️ ','');
+  const gistSettingsBtn=document.querySelector('[onclick="openGistSettings()"]'); if(gistSettingsBtn) gistSettingsBtn.textContent=L.sidebar_gist_settings;
+
+  const addSubjBtn=document.querySelector('[onclick="openSubjectModal(\'add\')"]'); if(addSubjBtn) addSubjBtn.textContent=L.sidebar_add_subject;
+  const addClassBtn=document.querySelector('[onclick="addClass()"]'); if(addClassBtn) addClassBtn.textContent=L.sidebar_add_class;
+
+  const logoutBtn=document.querySelector('.user-pill-logout'); if(logoutBtn) logoutBtn.textContent=L.sidebar_logout;
+  const saveBtn2=document.querySelector('.btn-save.btn-sm'); if(saveBtn2) saveBtn2.textContent=L.sidebar_save;
+  const importBtn=document.querySelector('[onclick="document.getElementById(\'import-json-input\').click()"]'); if(importBtn) importBtn.textContent=L.sidebar_import;
+
+  // Theme button text (re-apply theme to update label)
+  applyTheme();
+
+  // Save banner
+  const saveBannerMsg=document.querySelector('#save-banner'); 
+  if(saveBannerMsg){
+    const span=saveBannerMsg.childNodes[0];
+    if(span && span.nodeType===3) span.textContent=L.save_banner_msg+' ';
+    const saveNowBtn=saveBannerMsg.querySelector('.btn-save');
+    if(saveNowBtn) saveNowBtn.textContent=L.save_now;
+  }
+
+  // Students page - trim tabs
+  const trimBtns=document.querySelectorAll('.trim-btn');
+  trimBtns.forEach((b,i)=>{
+    const key=['trim1','trim2','trim3'][i];
+    if(key&&!b.closest('#rapport-trim-tabs')&&!b.closest('#transfer-modal')) b.textContent=L[key];
+  });
+  const searchInp=document.getElementById('search-input'); if(searchInp) searchInp.placeholder=L.search_ph;
+  const newNom=document.getElementById('new-nom'); if(newNom) newNom.placeholder=L.new_student_ph;
+
+  // Cahier placeholders
+  const cahierTime=document.getElementById('cahier-time'); if(cahierTime) cahierTime.placeholder=L.cahier_time_ph;
+  const cahierUnit=document.getElementById('cahier-unit'); if(cahierUnit) cahierUnit.placeholder=L.cahier_unit_ph;
+  const cahierLesson=document.getElementById('cahier-lesson'); if(cahierLesson) cahierLesson.placeholder=L.cahier_lesson_ph;
+  const cahierHw=document.getElementById('cahier-hw'); if(cahierHw) cahierHw.placeholder=L.cahier_hw_ph;
+  const cahierSearch=document.getElementById('cahier-search'); if(cahierSearch) cahierSearch.placeholder=L.cahier_search_ph;
+
+  // Absence page static labels
+  const absTitle=document.querySelector('#page-absence .card-title'); if(absTitle) absTitle.textContent=L.absence_title;
+  const absYearLbl=document.querySelector('#page-absence .card label[style]'); if(absYearLbl) absYearLbl.textContent=L.absence_year_label;
+  const absNote=document.getElementById('absence-note'); if(absNote) absNote.placeholder=L.absence_reason_ph;
+
+  // Empty messages
+  const emptyStudents=document.getElementById('empty-msg'); if(emptyStudents) emptyStudents.textContent=L.empty_students;
+  const cahierEmpty=document.getElementById('cahier-empty'); if(cahierEmpty) cahierEmpty.textContent=L.cahier_empty;
+  const annualEmpty=document.getElementById('annual-empty'); if(annualEmpty) annualEmpty.textContent=L.annual_empty;
+  const rapportEmpty=document.getElementById('rapport-empty'); if(rapportEmpty) rapportEmpty.textContent=L.rapport_empty;
+  const absLogEmpty=document.getElementById('absence-log-empty'); if(absLogEmpty) absLogEmpty.textContent=L.absence_log_empty;
+  const absWarn=document.getElementById('absence-warning'); if(absWarn) absWarn.textContent=L.absence_warning;
+  const absExceeded=document.getElementById('absence-exceeded'); if(absExceeded) absExceeded.textContent=L.absence_exceeded;
+  const absRemaining=document.getElementById('absence-remaining-txt'); if(absRemaining&&absRemaining.textContent) { const n=parseInt(absRemaining.textContent)||30; absRemaining.textContent=n+' '+(currentLang==='ar'?'متبقي':currentLang==='fr'?'restants':'remaining'); }
+
+  // Students page buttons (static ones outside renderTable)
+  const btnWheelEl=document.querySelector('[onclick="openWheel()"]'); if(btnWheelEl) btnWheelEl.textContent=L.btn_wheel;
+  const btnSaveGrades=document.querySelector('[onclick="manualSave()"]:not(.btn-sm)'); if(btnSaveGrades) btnSaveGrades.textContent=L.btn_save_grades;
+  const btnEditList=document.querySelector('[onclick="openEditAllModal()"]'); if(btnEditList) btnEditList.textContent=L.btn_edit_list;
+  const btnTransfer=document.querySelector('[onclick="openTransferModal()"]'); if(btnTransfer) btnTransfer.textContent=L.btn_transfer;
+  const btnList=document.querySelector('[onclick="openImportModal()"]'); if(btnList) btnList.textContent=L.btn_list;
+  const btnWord=document.querySelector('[onclick="openExportModal()"]'); if(btnWord) btnWord.textContent=L.btn_word;
+  const btnAddSt=document.querySelector('[onclick="addStudent()"]'); if(btnAddSt) btnAddSt.textContent=L.btn_add;
+  const rapportExportBtn=document.querySelector('[onclick="exportRapportWord()"]'); if(rapportExportBtn) rapportExportBtn.textContent=L.rapport_export;
+
+  // Annual page title
+  const annualTitle=document.querySelector('#page-annual .card-title'); if(annualTitle) annualTitle.textContent=L.annual_title;
+
+  // Rapport trim tabs
+  const rapportTrimBtns=document.querySelectorAll('#rapport-trim-tabs .trim-btn');
+  rapportTrimBtns.forEach((b,i)=>{ const k=['trim1','trim2','trim3'][i]; if(k) b.textContent=L[k]; });
+
+  // Rapport chart & table titles (only if already rendered)
+  const rct=document.getElementById('rapport-chart-title'); if(rct&&rct.textContent.trim()) rct.textContent=L.rapport_chart_title;
+  const rtt=document.getElementById('rapport-table-title'); if(rtt&&rtt.textContent.trim()) rtt.textContent=L.rapport_table_title;
+  const rcl=document.getElementById('rapport-col-label'); if(rcl&&rcl.textContent.trim()) rcl.textContent=L.rapport_col_grade;
+
+  // Trim label (header in students table)
+  const trimLabel=document.getElementById('trim-label');
+  if(trimLabel) trimLabel.textContent={1:L.trim1,2:L.trim2,3:L.trim3}[currentTrim].replace(/^📘 |^📗 |^📙 /,'');
+
+  // Last edit display - prefix update handled in updateLastEdit
+  updateLastEdit();
+}
 
 // ══════════════════════════════════════
 //  SUBJECT MANAGEMENT
@@ -1286,7 +1745,7 @@ function setTrim(n,btn){
   currentTrim=n;
   document.querySelectorAll('.trim-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('trim-label').textContent={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'}[n];
+  document.getElementById('trim-label').textContent={1:t('trim1'),2:t('trim2'),3:t('trim3')}[n].replace(/^📘 |^📗 |^📙 /,'');
   renderTable();
 }
 
@@ -1500,7 +1959,7 @@ function doExportWord(){
   const subjectObj=getSubject()||{name:'—',components:[]};
   const subject=subjectObj.name;
   const comps=subjectObj.components||[];
-  const trimNames={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'};
+  const trimNames={1:t('trim1').replace(/^📘 /,''),2:t('trim2').replace(/^📗 /,''),3:t('trim3').replace(/^📙 /,'')};
   const trimsToExport=exportTrimChoice===0?[1,2,3]:[exportTrimChoice];
 
   function getMoy(sid,trim){
@@ -1652,7 +2111,7 @@ function renderAbsence(){
   document.getElementById('absence-used').textContent=used;
   document.getElementById('absence-bar-fill').style.width=pct+'%';
   document.getElementById('absence-bar-fill').style.background=color;
-  document.getElementById('absence-remaining-txt').textContent=remaining+' متبقي';
+  document.getElementById('absence-remaining-txt').textContent=remaining+' '+(currentLang==='ar'?'متبقي':currentLang==='fr'?'restants':'remaining');
   document.getElementById('absence-warning').style.display=(used>=22&&used<30)?'block':'none';
   document.getElementById('absence-exceeded').style.display=used>=30?'block':'none';
   const log=document.getElementById('absence-log');
@@ -1723,6 +2182,7 @@ function importJSON(event){
 // has been pulled from Firestore (see bottom of file). Calling them here
 // would run them before allData is populated for the logged-in user.
 applyTheme();
+applyLang();
 document.getElementById('absence-date').value=new Date().toISOString().split('T')[0];
 
 
@@ -1735,7 +2195,7 @@ function confirmTransfer(){
   const to=parseInt(document.getElementById('transfer-to').value);
   if(from===to){alert('الثلاثي المصدر والوجهة متماثلان!');return;}
   const d=getCData();if(!d)return;
-  const trimNames={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'};
+  const trimNames={1:t('trim1').replace(/^📘 /,''),2:t('trim2').replace(/^📗 /,''),3:t('trim3').replace(/^📙 /,'')};
   if(!confirm('باش تنقل أعداد '+trimNames[from]+' إلى '+trimNames[to]+'. الأعداد الموجودة في '+trimNames[to]+' باش تتمسح. تأكد؟'))return;
   // flush pending first
   flushPending();
@@ -1755,7 +2215,7 @@ function confirmTransfer(){
   document.querySelectorAll('.trim-btn').forEach(function(b,i){
     b.classList.toggle('active',i+1===to);
   });
-  document.getElementById('trim-label').textContent=trimNames[to];
+  document.getElementById('trim-label').textContent=trimNames[to].replace(/^📘 |^📗 |^📙 /,'');
   renderTable();
   closeModal('transfer-modal');
   alert('تم نقل الأعداد من '+trimNames[from]+' إلى '+trimNames[to]+' ✅');
@@ -1804,7 +2264,7 @@ function renderRapport(){
   var comps=getComponents();
   var compName=comps.find(function(c){return c.id===rapportExam;});
   var examLabel=compName?compName.name:'المعدل';
-  var trimNames={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'};
+  var trimNames={1:t('trim1').replace(/^📘 /,''),2:t('trim2').replace(/^📗 /,''),3:t('trim3').replace(/^📙 /,'')};
   var title=examLabel+' — '+trimNames[rapportTrim];
   document.getElementById('rapport-chart-title').textContent='📊 توزيع '+title;
   document.getElementById('rapport-table-title').textContent='قائمة '+title;
@@ -1867,7 +2327,7 @@ function exportRapportWord(){
   flushPending();
   var comps=getComponents();
   var compFound=comps.find(function(c){return c.id===rapportExam;});
-  var trimNames={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'};
+  var trimNames={1:t('trim1').replace(/^📘 /,''),2:t('trim2').replace(/^📗 /,''),3:t('trim3').replace(/^📙 /,'')};
   var examLabel=compFound?compFound.name:'المعدل';
   var trimLabel=trimNames[rapportTrim];
   var cls=getClasses().find(function(c){return c.id===currentClassId;});
