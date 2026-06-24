@@ -629,6 +629,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
       <button onclick="setLang('en')" id="lang-btn-en" class="btn btn-sm lang-btn" style="flex:1">🇬🇧 EN</button>
     </div>
     <div class="last-edit" id="last-edit-display">—</div>
+    <button onclick="clearCache()" class="btn btn-sm btn-full" style="margin-top:8px;background:none;border:1.5px solid var(--red)22;color:var(--red);opacity:0.7;font-size:0.78rem;" title="مسح الكاش وإعادة التحميل">🗑️ مسح الكاش</button>
   </div>
 </div>
 
@@ -3843,6 +3844,29 @@ document.addEventListener('keydown',function(e){
     if(activePage&&activePage.id==='page-students'){e.preventDefault();printGradeTable();}
   }
 });
+
+// ══════════════════════════════════════
+//  CLEAR CACHE
+// ══════════════════════════════════════
+function clearCache(){
+  if(!confirm('باش تمسح الكاش المحلي وتعيد تحميل الصفحة.\nبياناتك في السحابة تبقى سالمة ✅\nتكمل؟')) return;
+  // 1. clear localStorage (keep auth token so user stays logged in)
+  const keysToKeep=['theme','lang','dragSortMode'];
+  const kept={};
+  keysToKeep.forEach(k=>{if(localStorage.getItem(k)!==null)kept[k]=localStorage.getItem(k);});
+  localStorage.clear();
+  Object.entries(kept).forEach(([k,v])=>localStorage.setItem(k,v));
+  // 2. clear service worker caches
+  if('caches' in window){
+    caches.keys().then(names=>names.forEach(n=>caches.delete(n)));
+  }
+  // 3. unregister service workers
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(regs=>regs.forEach(r=>r.unregister()));
+  }
+  // 4. reload fresh from network
+  setTimeout(()=>window.location.reload(true), 300);
+}
 
 function printAllCahier(){
   const cahier=getCahierData();
