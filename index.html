@@ -280,9 +280,32 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
 .auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
 .auth-forgot a:hover{text-decoration:underline;}
-.auth-loading{display:none;text-align:center;padding:40px 20px;}
-.auth-loading.show{display:block;}
-.auth-spinner{display:inline-block;width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;}
+/* ══ SPLASH SCREEN ══ */
+.auth-loading{display:none;position:absolute;inset:0;background:var(--bg);z-index:10;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+.auth-loading.show{display:flex;}
+
+.splash-logo{font-size:5rem;animation:splashPop 0.7s cubic-bezier(.34,1.56,.64,1) forwards;opacity:0;filter:drop-shadow(0 4px 24px rgba(240,168,48,0.4));}
+.splash-title{font-size:1.6rem;font-weight:800;color:var(--gold);margin-top:14px;opacity:0;animation:splashFade 0.5s ease 0.5s forwards;}
+.splash-sub{font-size:0.85rem;color:var(--text2);margin-top:6px;opacity:0;animation:splashFade 0.5s ease 0.7s forwards;}
+.splash-bar-wrap{width:160px;height:4px;background:var(--surface2);border-radius:4px;margin-top:28px;overflow:hidden;opacity:0;animation:splashFade 0.4s ease 0.6s forwards;}
+.splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:4px;animation:splashLoad 1.8s ease 0.7s forwards;}
+
+@keyframes splashPop{
+  0%{opacity:0;transform:scale(0.5);}
+  100%{opacity:1;transform:scale(1);}
+}
+@keyframes splashFade{
+  0%{opacity:0;transform:translateY(8px);}
+  100%{opacity:1;transform:translateY(0);}
+}
+@keyframes splashLoad{
+  0%{width:0%;}
+  60%{width:75%;}
+  85%{width:90%;}
+  100%{width:100%;}
+}
+
+.auth-spinner{display:none;}/* hide old spinner */
 #app-root{display:none;}
 #app-root.ready{display:block;}
 .user-pill{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:8px 12px;margin-bottom:7px;font-size:0.82rem;}
@@ -433,7 +456,10 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 <div id="auth-screen">
   <div class="auth-box">
     <div id="auth-loading" class="auth-loading show">
-      <div class="auth-spinner"></div>
+      <div class="splash-logo">📚</div>
+      <div class="splash-title">مساعد الأستاذ</div>
+      <div class="splash-sub">Student tracking · Absence log</div>
+      <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
     </div>
     <div id="auth-forms" style="display:none">
       <div class="auth-logo">📚</div>
