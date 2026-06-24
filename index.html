@@ -280,7 +280,39 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
 .auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
 .auth-forgot a:hover{text-decoration:underline;}
-/* ══ SPLASH SCREEN ══ */
+/* ══ TIMER MODAL ══ */
+#timer-modal .modal{max-width:400px;text-align:center;padding:28px 20px;}
+.timer-display{font-size:4.5rem;font-weight:800;font-family:'Courier New',monospace;color:var(--gold);letter-spacing:4px;margin:10px 0;line-height:1;text-shadow:0 0 30px rgba(240,168,48,0.3);}
+.timer-display.warning{color:#ff8c00;animation:timerPulse 1s ease infinite;}
+.timer-display.danger{color:var(--red);animation:timerPulse 0.5s ease infinite;}
+.timer-display.done{color:var(--green);}
+.timer-progress-wrap{width:100%;height:8px;background:var(--surface2);border-radius:8px;margin:14px 0;overflow:hidden;}
+.timer-progress-bar{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:8px;transition:width 1s linear,background 0.5s;}
+.timer-progress-bar.warning{background:linear-gradient(90deg,#ff8c00,#ffb300);}
+.timer-progress-bar.danger{background:linear-gradient(90deg,var(--red),#ff8050);}
+.timer-presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:14px 0 6px;}
+.timer-preset-btn{padding:5px 12px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'Amiri',serif;font-size:0.82rem;cursor:pointer;transition:all 0.2s;}
+.timer-preset-btn:hover{border-color:var(--gold);color:var(--gold);}
+.timer-custom{display:flex;gap:8px;align-items:center;justify-content:center;margin:10px 0;}
+.timer-custom input{width:64px;text-align:center;font-size:1.1rem;font-weight:700;padding:6px 8px;}
+.timer-custom span{color:var(--text2);font-size:0.9rem;}
+.timer-btns{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+.timer-fullscreen-btn{position:absolute;top:14px;left:14px;background:none;border:1.5px solid var(--border);border-radius:8px;color:var(--text2);padding:5px 9px;cursor:pointer;font-size:0.85rem;transition:all 0.2s;}
+.timer-fullscreen-btn:hover{border-color:var(--gold);color:var(--gold);}
+/* fullscreen overlay */
+#timer-fs{display:none;position:fixed;inset:0;background:#0a0f18;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+#timer-fs.open{display:flex;}
+.timer-fs-display{font-size:22vw;font-weight:900;font-family:'Courier New',monospace;color:var(--gold);letter-spacing:8px;line-height:1;text-shadow:0 0 60px rgba(240,168,48,0.4);}
+.timer-fs-display.warning{color:#ff8c00;}
+.timer-fs-display.danger{color:var(--red);animation:timerPulse 0.5s ease infinite;}
+.timer-fs-display.done{color:var(--green);}
+.timer-fs-bar{width:80%;height:12px;background:#1e2840;border-radius:8px;margin-top:40px;overflow:hidden;}
+.timer-fs-bar-inner{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:8px;transition:width 1s linear;}
+.timer-fs-label{color:#4a6080;font-size:2.5vw;margin-top:20px;font-family:'Amiri',serif;}
+.timer-fs-close{position:fixed;top:20px;left:20px;background:#1e2840;border:1.5px solid #2a3a50;border-radius:10px;color:#4a6080;padding:8px 14px;cursor:pointer;font-size:0.9rem;transition:all 0.2s;}
+.timer-fs-close:hover{color:var(--gold);border-color:var(--gold);}
+@keyframes timerPulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
 .auth-loading{display:none;position:absolute;inset:0;background:var(--bg);z-index:10;flex-direction:column;align-items:center;justify-content:center;gap:0;}
 .auth-loading.show{display:flex;}
 
@@ -606,6 +638,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   <button class="nav-btn" onclick="showPage('rapport',this)">📈 تقرير</button>
   <button class="nav-btn" onclick="showPage('absence',this)">📋 سجل الغياب</button>
   <button class="nav-btn" onclick="showPage('cahier',this);initCahier()">📓 كراس القسم</button>
+  <button class="nav-btn" onclick="openTimer()">⏱️ مؤقت</button>
 </div>
 
 <!-- SAVE BANNER -->
@@ -2357,16 +2390,8 @@ applyLang();
 updateSortBtn();
 document.getElementById('absence-date').value=new Date().toISOString().split('T')[0];
 
-// Ctrl+P → print grade table directly
-document.addEventListener('keydown',function(e){
-  if(e.ctrlKey&&e.key==='p'){
-    const activePage=document.querySelector('.page.active');
-    if(activePage&&activePage.id==='page-students'){
-      e.preventDefault();
-      printGradeTable();
-    }
-  }
-});
+
+
 
 
 // TRANSFER GRADES
@@ -3655,6 +3680,135 @@ function printGradeTable(){
   win.document.close();
 }
 
+// ══════════════════════════════════════
+//  TIMER — مؤقت الامتحان
+// ══════════════════════════════════════
+let timerTotal=0, timerLeft=0, timerInterval=null, timerRunning=false, timerFS=false;
+
+function openTimer(){
+  document.getElementById('timer-modal').classList.add('open');
+  timerUpdateDisplay();
+}
+
+function setTimerPreset(mins){
+  document.getElementById('timer-h').value=0;
+  document.getElementById('timer-m').value=mins;
+  document.getElementById('timer-s').value=0;
+  timerReset();
+}
+
+function timerGetInput(){
+  const h=parseInt(document.getElementById('timer-h').value)||0;
+  const m=parseInt(document.getElementById('timer-m').value)||0;
+  const s=parseInt(document.getElementById('timer-s').value)||0;
+  return h*3600+m*60+s;
+}
+
+function timerStartStop(){
+  if(timerRunning){
+    // pause
+    clearInterval(timerInterval);
+    timerRunning=false;
+    document.getElementById('timer-start-btn').textContent='▶️ استمر';
+  } else {
+    if(timerLeft===0){
+      timerTotal=timerGetInput();
+      timerLeft=timerTotal;
+    }
+    if(timerLeft<=0||timerTotal<=0) return;
+    timerRunning=true;
+    document.getElementById('timer-start-btn').textContent='⏸️ إيقاف';
+    timerInterval=setInterval(()=>{
+      timerLeft--;
+      timerUpdateDisplay();
+      if(timerLeft<=0){
+        clearInterval(timerInterval);
+        timerRunning=false;
+        timerDone();
+      }
+    },1000);
+  }
+}
+
+function timerReset(){
+  clearInterval(timerInterval);
+  timerRunning=false;
+  timerLeft=0;
+  timerTotal=0;
+  document.getElementById('timer-start-btn').textContent='▶️ ابدأ';
+  timerUpdateDisplay();
+}
+
+function timerUpdateDisplay(){
+  const left=timerLeft;
+  const h=Math.floor(left/3600);
+  const m=Math.floor((left%3600)/60);
+  const s=left%60;
+  const str=(h?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+
+  // color state
+  const pct=timerTotal>0?(left/timerTotal)*100:100;
+  let state='';
+  if(timerTotal>0&&left<=30) state='danger';
+  else if(timerTotal>0&&pct<=20) state='warning';
+
+  // modal display
+  const disp=document.getElementById('timer-display');
+  const bar=document.getElementById('timer-bar');
+  if(disp){ disp.textContent=str; disp.className='timer-display'+( state?' '+state:''); }
+  if(bar){ bar.style.width=pct+'%'; bar.className='timer-progress-bar'+(state?' '+state:''); }
+
+  // fullscreen display
+  const fsDisp=document.getElementById('timer-fs-display');
+  const fsBar=document.getElementById('timer-fs-bar');
+  if(fsDisp){ fsDisp.textContent=str; fsDisp.className='timer-fs-display'+(state?' '+state:''); }
+  if(fsBar) fsBar.style.width=pct+'%';
+}
+
+function timerDone(){
+  document.getElementById('timer-start-btn').textContent='▶️ ابدأ';
+  const disp=document.getElementById('timer-display');
+  const fsDisp=document.getElementById('timer-fs-display');
+  if(disp){ disp.textContent='00:00'; disp.className='timer-display done'; }
+  if(fsDisp){ fsDisp.textContent='00:00'; fsDisp.className='timer-fs-display done'; }
+  // beep using Web Audio API
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [0,0.3,0.6].forEach(t=>{
+      const o=ctx.createOscillator();
+      const g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=880;
+      g.gain.setValueAtTime(0.4,ctx.currentTime+t);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+0.25);
+      o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+0.25);
+    });
+  }catch(e){}
+}
+
+function openTimerFS(){
+  timerFS=true;
+  document.getElementById('timer-fs').classList.add('open');
+  timerUpdateDisplay();
+  // try fullscreen API
+  try{ document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen(); }catch(e){}
+}
+
+function closeTimerFS(){
+  timerFS=false;
+  document.getElementById('timer-fs').classList.remove('open');
+  try{ document.exitFullscreen&&document.exitFullscreen(); }catch(e){}
+}
+
+// ESC closes fullscreen
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&timerFS) closeTimerFS();
+  if(e.ctrlKey&&e.key==='p'){
+    const activePage=document.querySelector('.page.active');
+    if(activePage&&activePage.id==='page-students'){e.preventDefault();printGradeTable();}
+  }
+});
+
 function printAllCahier(){
   const cahier=getCahierData();
   const filterClass=document.getElementById('cahier-filter-class')?.value||'';
@@ -3735,6 +3889,46 @@ function printAllCahier(){
     <div class="wheel-remaining" id="wheel-remaining"></div>
   </div>
 </div>
+<!-- TIMER MODAL -->
+<div class="modal-overlay" id="timer-modal">
+  <div class="modal" style="position:relative">
+    <button class="timer-fullscreen-btn" onclick="openTimerFS()" title="شاشة كاملة">⛶ كاملة</button>
+    <div class="modal-title">⏱️ مؤقت الامتحان</div>
+    <div class="timer-display" id="timer-display">00:00:00</div>
+    <div class="timer-progress-wrap"><div class="timer-progress-bar" id="timer-bar" style="width:100%"></div></div>
+    <div class="timer-presets">
+      <button class="timer-preset-btn" onclick="setTimerPreset(5)">5 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(10)">10 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(15)">15 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(20)">20 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(30)">30 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(45)">45 د</button>
+      <button class="timer-preset-btn" onclick="setTimerPreset(60)">60 د</button>
+    </div>
+    <div class="timer-custom">
+      <input type="number" id="timer-h" min="0" max="5" value="0" style="width:60px" placeholder="س">
+      <span>س</span>
+      <input type="number" id="timer-m" min="0" max="59" value="20" style="width:60px" placeholder="د">
+      <span>د</span>
+      <input type="number" id="timer-s" min="0" max="59" value="0" style="width:60px" placeholder="ث">
+      <span>ث</span>
+    </div>
+    <div class="timer-btns">
+      <button class="btn btn-gold" id="timer-start-btn" onclick="timerStartStop()">▶️ ابدأ</button>
+      <button class="btn btn-outline" onclick="timerReset()">🔄 إعادة</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('timer-modal');timerReset()">✕ إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER FULLSCREEN -->
+<div id="timer-fs">
+  <div class="timer-fs-display" id="timer-fs-display">00:00:00</div>
+  <div class="timer-fs-bar"><div class="timer-fs-bar-inner" id="timer-fs-bar" style="width:100%"></div></div>
+  <div class="timer-fs-label" id="timer-fs-label">⏱️ مؤقت الامتحان</div>
+  <button class="timer-fs-close" onclick="closeTimerFS()">✕ إغلاق الشاشة الكاملة</button>
+</div>
+
 <div id="print-area"></div>
 </body>
 </html>
