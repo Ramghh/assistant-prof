@@ -24,13 +24,6 @@
   --green:#00c878;--orange:#f0a830;--red:#ff5050;--accent:#1e2840;
   --sidebar-w:280px;--shadow:0 4px 24px #0000004a;
   --input-bg:#182030;--card-shadow:0 2px 16px #00000038;
-  /* Glassmorphism */
-  --glass-bg:rgba(24,32,48,0.55);
-  --glass-border:rgba(240,168,48,0.18);
-  --glass-blur:blur(18px);
-  --glass-shadow:0 8px 32px rgba(0,0,0,0.45), 0 1.5px 0 rgba(240,168,48,0.10) inset;
-  --glass-hover-border:rgba(240,168,48,0.38);
-  --glass-hover-shadow:0 12px 40px rgba(0,0,0,0.55), 0 0 18px rgba(240,168,48,0.10);
 }
 /* ══ WARM LIGHT THEME ══ */
 body.light {
@@ -39,34 +32,17 @@ body.light {
   --text:#1a1410;--text2:#6a5840;
   --green:#1a7a48;--orange:#c07010;--red:#c03020;--accent:#b07830;
   --input-bg:#f8f6f2;--card-shadow:0 2px 16px #00000014;
-  /* disable glass in light mode */
-  --glass-bg:#ffffff;
-  --glass-border:#d0c8bc88;
-  --glass-blur:blur(0px);
-  --glass-shadow:0 2px 16px #00000014;
-  --glass-hover-border:#b0783055;
-  --glass-hover-shadow:0 4px 20px #00000018;
 }
 
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Amiri',serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;transition:background 0.3s,color 0.3s;}
-/* Dark mode animated background orbs */
-body:not(.light)::before{
-  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(240,168,48,0.07) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 35% at 80% 75%, rgba(100,140,220,0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 60% 10%, rgba(240,168,48,0.04) 0%, transparent 60%);
-}
-.page,.sidebar,.header,.nav,.auth-card,.modal-content{position:relative;z-index:1;}
 
 /* ══ SIDEBAR OVERLAY ══ */
 .sidebar-overlay{display:none;position:fixed;inset:0;background:#00000077;z-index:400;transition:opacity 0.3s;}
 .sidebar-overlay.open{display:block;}
 
 /* ══ SIDEBAR ══ */
-.sidebar{position:fixed;top:0;right:-100%;width:var(--sidebar-w);height:100%;background:rgba(14,22,33,0.82);border-left:2px solid var(--glass-border);z-index:500;transition:right 0.3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,0.5);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);}
-body.light .sidebar{background:var(--surface);border-left-color:#d0c8bc;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.sidebar{position:fixed;top:0;right:-100%;width:var(--sidebar-w);height:100%;background:var(--surface);border-left:2px solid var(--gold);z-index:500;transition:right 0.3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column;box-shadow:-4px 0 24px #00000033;}
 .sidebar.open{right:0;}
 .sidebar-header{padding:20px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .sidebar-title{font-size:1.1rem;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif;}
@@ -94,8 +70,7 @@ body.light .sidebar-footer{border-top:1px solid #d0c8bc;}
 .class-item-btn:hover{background:var(--surface);color:var(--red);}
 
 /* ══ HEADER ══ */
-.header{background:rgba(14,22,33,0.75);border-bottom:2px solid var(--glass-border);padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--glass-shadow);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);}
-body.light .header{background:var(--surface);border-bottom-color:#d0c8bc88;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.header{background:var(--surface);border-bottom:2px solid var(--gold);padding:12px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow);}
 .header-menu-btn{background:none;border:none;color:var(--gold);font-size:1.4rem;cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1;}
 .header-menu-btn:hover{background:var(--surface2);}
 .header-title{font-size:1.2rem;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif;}
@@ -104,8 +79,7 @@ body.light .header{background:var(--surface);border-bottom-color:#d0c8bc88;backd
 .header-year{font-size:0.78rem;color:var(--text2);white-space:nowrap;}
 
 /* ══ NAV (bottom style) ══ */
-.nav{display:flex;background:rgba(14,22,33,0.65);border-bottom:2px solid var(--glass-border);overflow-x:auto;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);}
-body.light .nav{background:var(--surface);border-bottom-color:#d0c8bc88;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.nav{display:flex;background:var(--surface);border-bottom:2px solid var(--border);overflow-x:auto;}
 .nav-btn{flex:1;background:none;border:none;color:var(--text2);font-family:'Amiri',serif;font-size:0.88rem;padding:11px 8px;cursor:pointer;border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;text-align:center;}
 .nav-btn:hover{color:var(--gold);}
 .nav-btn.active{color:var(--gold2);border-bottom-color:var(--gold);font-weight:700;}
@@ -118,27 +92,13 @@ body.light .nav{background:var(--surface);border-bottom-color:#d0c8bc88;backdrop
 .main{max-width:960px;margin:0 auto;padding:16px 10px 70px;}
 
 /* ══ CARD ══ */
-.card{
-  background:var(--glass-bg);
-  border:1.5px solid var(--glass-border);
-  border-radius:14px;padding:18px;margin-bottom:16px;
-  box-shadow:var(--glass-shadow);
-  backdrop-filter:var(--glass-blur);
-  -webkit-backdrop-filter:var(--glass-blur);
-  transition:box-shadow 0.25s, border-color 0.25s;
-}
-.card:hover{
-  border-color:var(--glass-hover-border);
-  box-shadow:var(--glass-hover-shadow);
-}
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:var(--card-shadow);}
 .card-title{font-size:1.05rem;font-weight:700;color:var(--gold);margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;}
 
 /* ══ FORMS ══ */
 label{display:block;color:var(--text2);font-size:0.8rem;margin-bottom:4px;}
-input[type=text],input[type=number],input[type=date],select,textarea{width:100%;background:rgba(24,32,48,0.55);border:1.5px solid rgba(240,168,48,0.15);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:8px 11px;border-radius:9px;outline:none;transition:border 0.2s,box-shadow 0.2s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
-input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,168,48,0.12);}
-body.light input[type=text],body.light input[type=number],body.light input[type=date],body.light select,body.light textarea{background:var(--input-bg);border-color:var(--border);backdrop-filter:none;-webkit-backdrop-filter:none;}
-body.light input[type=text]:focus,body.light input[type=number]:focus,body.light input[type=date]:focus,body.light select:focus,body.light textarea:focus{box-shadow:none;}
+input[type=text],input[type=number],input[type=date],select,textarea{width:100%;background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);font-family:'Amiri',serif;font-size:0.95rem;padding:8px 11px;border-radius:9px;outline:none;transition:border 0.2s;}
+input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,select:focus,textarea:focus{border-color:var(--gold);}
 input:focus,select:focus,textarea:focus{border-color:var(--gold);}
 textarea{resize:vertical;min-height:80px;}
 select option{background:var(--surface);}
@@ -208,9 +168,7 @@ body.light .bn{background:#f0ece4;color:#6a5840;border-color:#d0c8bc88;}
 
 /* ══ STATS BOXES ══ */
 .stats{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;}
-.stat-box{flex:1;min-width:80px;background:rgba(30,40,64,0.60);border:1.5px solid var(--glass-border);border-radius:11px;padding:10px 8px;text-align:center;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:border-color 0.2s,box-shadow 0.2s;}
-.stat-box:hover{border-color:var(--glass-hover-border);box-shadow:0 4px 16px rgba(240,168,48,0.08);}
-body.light .stat-box{background:#f4f1ec;border-color:#d0c8bc;backdrop-filter:none;-webkit-backdrop-filter:none;}
+.stat-box{flex:1;min-width:80px;background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;padding:10px 8px;text-align:center;}
 .stat-icon{font-size:1.2rem;}
 .stat-num{font-size:1.3rem;font-weight:700;color:var(--gold2);}
 .stat-label{font-size:0.7rem;color:var(--text2);margin-top:1px;}
@@ -235,11 +193,9 @@ body.light .formula-display{background:#ffffff;border-color:#d0c8bc;}
 
 /* ══ TRIM TABS ══ */
 .trim-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
-.trim-btn{padding:6px 14px;border-radius:20px;border:1.5px solid rgba(240,168,48,0.20);background:rgba(30,40,64,0.50);color:var(--text2);font-family:'Amiri',serif;font-size:0.86rem;cursor:pointer;transition:all 0.2s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
-.trim-btn:hover{border-color:rgba(240,168,48,0.40);color:var(--gold);}
-.trim-btn.active{background:var(--gold);color:#1a1208;border-color:var(--gold);font-weight:700;box-shadow:0 2px 12px rgba(240,168,48,0.30);}
-body.light .trim-btn{background:var(--surface2);border-color:var(--border);color:var(--text2);backdrop-filter:none;-webkit-backdrop-filter:none;}
-body.light .trim-btn.active{background:#b07830;color:#ffffff;border-color:#b07830;box-shadow:none;}
+.trim-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-family:'Amiri',serif;font-size:0.86rem;cursor:pointer;transition:all 0.2s;}
+.trim-btn.active{background:var(--gold);color:#1a1208;border-color:var(--gold);font-weight:700;}
+body.light .trim-btn.active{background:#b07830;color:#ffffff;border-color:#b07830;}
 body.light .nav{background:#ffffff;border-bottom-color:#d0c8bc;}
 body.light .nav-btn.active{color:#b07830;border-bottom-color:#b07830;}
 body.light .header-class-pill{background:#b0783018;border-color:#b0783066;color:#7a4a10;}
@@ -263,17 +219,9 @@ body.light .alert-warn{background:#fff3d4;border-color:#c0701066;color:#7a4000;}
 body.light .alert-danger{background:#ffe8e4;border-color:#c0302066;color:#8a1010;}
 
 /* ══ MODAL ══ */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:600;align-items:center;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
-body.light .modal-overlay{background:rgba(0,0,0,0.45);backdrop-filter:none;-webkit-backdrop-filter:none;}
+.modal-overlay{display:none;position:fixed;inset:0;background:#000000aa;z-index:600;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal{
-  background:rgba(24,32,48,0.72);
-  border:1.5px solid var(--glass-border);
-  border-radius:16px;padding:22px;max-width:580px;width:95%;max-height:88vh;overflow-y:auto;
-  backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
-  box-shadow:0 16px 48px rgba(0,0,0,0.6), 0 1px 0 rgba(240,168,48,0.12) inset;
-}
-body.light .modal{background:var(--surface);border-color:var(--gold);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 4px 24px #00000020;}
+.modal{background:var(--surface);border:2px solid var(--gold);border-radius:16px;padding:22px;max-width:580px;width:95%;max-height:88vh;overflow-y:auto;}
 .modal-title{font-size:1.05rem;font-weight:700;color:var(--gold2);margin-bottom:14px;}
 .edit-list-item{display:flex;align-items:center;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);}
 .edit-list-num{color:var(--text2);font-size:0.78rem;min-width:20px;text-align:center;}
@@ -312,21 +260,7 @@ body.light .trim-sel-btn.selected{background:#b07830;color:#ffffff;border-color:
 
 /* ══ AUTH SCREEN ══ */
 #auth-screen{position:fixed;inset:0;background:var(--bg);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}
-body:not(.light) #auth-screen{
-  background:
-    radial-gradient(ellipse 70% 50% at 30% 30%, rgba(240,168,48,0.10) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 75% 70%, rgba(80,120,200,0.08) 0%, transparent 60%),
-    #0e1621;
-}
-.auth-box{
-  width:100%;max-width:380px;
-  background:rgba(24,32,48,0.65);
-  border:1.5px solid var(--glass-border);
-  border-radius:16px;padding:28px 24px;
-  box-shadow:0 16px 48px rgba(0,0,0,0.5), 0 1px 0 rgba(240,168,48,0.10) inset;
-  backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
-}
-body.light .auth-box{background:var(--surface);border-color:var(--border);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--card-shadow);}
+.auth-box{width:100%;max-width:380px;background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:28px 24px;box-shadow:var(--shadow);}
 .auth-logo{text-align:center;font-size:2.2rem;margin-bottom:6px;}
 .auth-title{text-align:center;font-size:1.3rem;font-weight:700;color:var(--gold2);font-family:'Playfair Display',serif;margin-bottom:4px;}
 .auth-sub{text-align:center;font-size:0.82rem;color:var(--text2);margin-bottom:20px;}
@@ -3599,84 +3533,100 @@ function printGradeTable(){
   const subjectName=getSubject(sid)?getSubject(sid).name:'';
   const today=new Date().toLocaleDateString('ar-TN');
 
-  // stats — pass cid AND sid correctly
   const avgs=students.map(s=>parseFloat(moyenne(s.id,st,cid,sid))).filter(v=>!isNaN(v));
   const passing=avgs.filter(v=>v>=10).length;
   const failing=avgs.filter(v=>v<10).length;
   const classAvg=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):'—';
 
-  // table rows
-  const thCols=comps.map(c=>`<th>${c.name}<br><span style="font-weight:400;font-size:8.5pt;opacity:0.7">(${c.w}%)</span></th>`).join('');
+  const thCols=comps.map(c=>`<th>${c.name}<br><small>(${c.w}%)</small></th>`).join('');
   const rows=students.map((s,i)=>{
     const moy=parseFloat(moyenne(s.id,st,cid,sid));
     const moyStr=isNaN(moy)?'—':moy.toFixed(2);
     const passCls=isNaN(moy)?'':moy>=10?'pass':'fail';
     const result=isNaN(moy)?'—':moy>=10?'ناجح ✓':'راسب ✗';
-    // pass cid explicitly to getNote
     const tdCols=comps.map(c=>{
       const v=getNote(s.id,st,c.id,cid);
-      return `<td>${v!==null&&v!==''?parseFloat(v).toFixed(2):'—'}</td>`;
+      return '<td>'+(v!==null&&v!==''?parseFloat(v).toFixed(2):'—')+'</td>';
     }).join('');
-    return `<tr>
-      <td>${i+1}</td>
-      <td style="text-align:right;direction:rtl;padding-right:8px">${s.nom}</td>
-      ${tdCols}
-      <td class="print-avg ${passCls}">${moyStr}</td>
-      <td class="${passCls}">${result}</td>
-    </tr>`;
+    return '<tr><td>'+(i+1)+'</td><td class="name-col">'+s.nom+'</td>'+tdCols+
+      '<td class="avg '+passCls+'">'+moyStr+'</td>'+
+      '<td class="res '+passCls+'">'+result+'</td></tr>';
   }).join('');
 
-  const html=`
-    <div class="print-header">
-      ${institution?`<div style="font-size:0.85rem;color:#555;margin-bottom:4px">${institution}</div>`:''}
-      <div class="print-title">📋 كشف الأعداد — ${clsName}</div>
-      <div class="print-sub">
-        ${subjectName?subjectName+' — ':''}${trimLabel} — السنة الدراسية ${currentSchoolYear}
-      </div>
-      ${teacher?`<div class="print-sub">الأستاذ: ${teacher}</div>`:''}
-      <div class="print-sub" style="margin-top:6px;font-size:0.8rem;color:#888">تاريخ الطباعة: ${today}</div>
-    </div>
+  const win=window.open('','_blank','width=900,height=700');
+  if(!win){alert('السماح بالنوافذ المنبثقة في المتصفح!');return;}
 
-    <table class="print-grade-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th style="text-align:right;padding-right:10px">الاسم واللقب</th>
-          ${thCols}
-          <th>المعدل /20</th>
-          <th>النتيجة</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2" style="text-align:right;padding-right:10px">إحصائيات القسم</td>
-          <td colspan="${comps.length}"></td>
-          <td>${classAvg}</td>
-          <td style="font-size:9pt">✓${passing} / ✗${failing}</td>
-        </tr>
-      </tfoot>
-    </table>
-
-    <div style="margin-top:20px;display:flex;gap:30px;font-size:10pt;border-top:1px solid #ccc;padding-top:10px;">
-      <span>✅ ناجح: <strong>${passing}</strong></span>
-      <span>❌ راسب: <strong>${failing}</strong></span>
-      <span>📈 معدل القسم: <strong>${classAvg}</strong></span>
-      <span>👥 المجموع: <strong>${students.length}</strong></span>
-    </div>
-
-    <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:10pt;border-top:1px dashed #ccc;padding-top:12px;">
-      <div>توقيع الأستاذ: _______________</div>
-      <div>ختم المؤسسة: _______________</div>
-    </div>`;
-
-  const area=document.getElementById('print-area');
-  area.innerHTML=html;
-  // give browser a frame to render the DOM before opening print dialog
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    window.print();
-    setTimeout(()=>area.innerHTML='',1000);
-  }));
+  win.document.write(`<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>كشف الأعداد — ${clsName}</title>
+<style>
+  @page{size:A4 portrait;margin:12mm 10mm;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Amiri",serif;direction:rtl;color:#000;background:#fff;padding:16px;font-size:11pt;}
+  .header{text-align:center;border-bottom:2.5px solid #000;padding-bottom:10px;margin-bottom:14px;}
+  .inst{font-size:9pt;color:#555;margin-bottom:4px;}
+  .title{font-size:15pt;font-weight:800;margin-bottom:4px;}
+  .sub{font-size:9pt;color:#444;margin-bottom:2px;}
+  table{width:100%;border-collapse:collapse;font-size:10pt;}
+  th{background:#1a1a2e;color:#fff;padding:7px 5px;text-align:center;border:1px solid #888;font-size:9.5pt;}
+  th:nth-child(2){text-align:right;padding-right:8px;}
+  td{padding:5px 4px;text-align:center;border:1px solid #ccc;vertical-align:middle;}
+  td:first-child{color:#777;font-size:9pt;width:24px;}
+  .name-col{text-align:right;font-weight:700;padding-right:8px;direction:rtl;}
+  tr:nth-child(even) td{background:#f5f5f5;}
+  .avg{font-weight:800;}
+  .pass{color:#1a7a48;}
+  .fail{color:#c03020;}
+  tfoot td{background:#eee;font-weight:700;border-top:2px solid #666;font-size:9.5pt;}
+  .stats{margin-top:14px;display:flex;gap:24px;font-size:10pt;border-top:1px solid #ccc;padding-top:8px;}
+  .sig{margin-top:36px;display:flex;justify-content:space-between;font-size:10pt;border-top:1px dashed #ccc;padding-top:10px;}
+  small{font-weight:400;font-size:8pt;opacity:0.75;}
+  @media print{body{padding:0;}}
+</style>
+</head>
+<body>
+<div class="header">
+  ${institution?'<div class="inst">'+institution+'</div>':''}
+  <div class="title">كشف الأعداد — ${clsName}</div>
+  <div class="sub">${subjectName?subjectName+' — ':''}${trimLabel} — السنة الدراسية ${currentSchoolYear}</div>
+  ${teacher?'<div class="sub">الأستاذ: '+teacher+'</div>':''}
+  <div class="sub" style="margin-top:5px;font-size:8.5pt;color:#888">تاريخ الطباعة: ${today}</div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th style="text-align:right;padding-right:8px">الاسم واللقب</th>
+      ${thCols}
+      <th>المعدل /20</th>
+      <th>النتيجة</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2" style="text-align:right;padding-right:8px">إحصائيات القسم</td>
+      <td colspan="${comps.length}"></td>
+      <td class="avg">${classAvg}</td>
+      <td style="font-size:9pt">✓${passing} / ✗${failing}</td>
+    </tr>
+  </tfoot>
+</table>
+<div class="stats">
+  <span>✅ ناجح: <strong>${passing}</strong></span>
+  <span>❌ راسب: <strong>${failing}</strong></span>
+  <span>📈 معدل القسم: <strong>${classAvg}</strong></span>
+  <span>👥 المجموع: <strong>${students.length}</strong></span>
+</div>
+<div class="sig">
+  <div>توقيع الأستاذ: _______________</div>
+  <div>ختم المؤسسة: _______________</div>
+</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+  win.document.close();
 }
 
 function printAllCahier(){
