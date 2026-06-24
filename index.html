@@ -380,7 +380,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 #wheel-modal .modal{max-width:480px;text-align:center;overflow:hidden;}
 .wheel-container{position:relative;width:min(360px,85vw);height:min(360px,85vw);margin:0 auto 16px;}
 .wheel-canvas{border-radius:50%;box-shadow:0 4px 32px #0009;width:100%;height:100%;display:block;}
-.wheel-pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:2.8rem;z-index:10;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.8));line-height:1;}
+.wheel-pointer{position:absolute;top:-2px;left:50%;transform:translateX(-50%);z-index:10;pointer-events:none;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.9));line-height:1;}
 .wheel-winner{font-size:1.5rem;font-weight:800;color:var(--gold);min-height:40px;margin:10px 0 4px;transition:all 0.3s;}
 .wheel-winner-sub{font-size:0.8rem;color:var(--text2);margin-bottom:12px;min-height:18px;}
 .wheel-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
@@ -410,16 +410,70 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .cahier-del-btn:hover{opacity:1;color:var(--red);}
 
 @media print {
+  /* ── hide everything except print-area ── */
   body > *:not(#print-area){ display:none!important; }
   #print-area{ display:block!important; }
-  #print-area{ font-family:"Amiri",serif; direction:rtl; color:#000; background:#fff; padding:20px; }
+
+  /* ── page setup ── */
+  @page{ size:A4 portrait; margin:12mm 10mm; }
+
+  /* ── base ── */
+  #print-area{
+    font-family:"Amiri",serif;
+    direction:rtl;
+    color:#000;
+    background:#fff;
+    padding:0;
+    font-size:11pt;
+  }
+
+  /* ── header ── */
   .print-header{ text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:16px; }
   .print-title{ font-size:1.4rem; font-weight:800; }
   .print-sub{ font-size:0.85rem; color:#555; margin-top:4px; }
+  .print-hw{ background:#fff3cd; border:1px solid #f0ad4e; border-radius:6px; padding:6px 10px; margin-top:10px; font-weight:700; }
+
+  /* ── cahier fields ── */
   .print-field{ display:flex; gap:8px; margin-bottom:8px; font-size:0.95rem; border-bottom:1px solid #eee; padding-bottom:6px; }
   .print-label{ font-weight:700; min-width:110px; flex-shrink:0; }
   .print-val{ flex:1; }
-  .print-hw{ background:#fff3cd; border:1px solid #f0ad4e; border-radius:6px; padding:6px 10px; margin-top:10px; font-weight:700; }
+
+  /* ── grades table ── */
+  .print-grade-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    font-size:10pt;
+  }
+  .print-grade-table th{
+    background:#1a1a2e;
+    color:#fff;
+    padding:7px 6px;
+    text-align:center;
+    font-weight:700;
+    border:1px solid #999;
+  }
+  .print-grade-table th:first-child{ text-align:right; padding-right:10px; }
+  .print-grade-table td{
+    padding:6px 5px;
+    text-align:center;
+    border:1px solid #ccc;
+    vertical-align:middle;
+  }
+  .print-grade-table td:first-child{ color:#555; font-size:9pt; width:22px; }
+  .print-grade-table td:nth-child(2){ text-align:right; font-weight:700; padding-right:8px; direction:rtl; }
+  .print-grade-table tr:nth-child(even) td{ background:#f7f7f7; }
+  .print-grade-table .print-avg{ font-weight:800; }
+  .print-grade-table .pass{ color:#1a7a48; font-weight:700; }
+  .print-grade-table .fail{ color:#c03020; font-weight:700; }
+  .print-grade-table tfoot td{
+    background:#f0f0f0;
+    font-weight:700;
+    border-top:2px solid #666;
+    font-size:9.5pt;
+  }
+  /* no page break inside table rows if possible */
+  .print-grade-table tr{ page-break-inside:avoid; }
 }
 #print-area{ display:none; }
 /* ══ SUBJECT SELECTOR ══ */
@@ -646,6 +700,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         <button class="btn btn-save" style="flex:1" onclick="manualSave()">💾 حفظ الأعداد</button>
         <button class="btn btn-outline" style="flex:1" onclick="openEditAllModal()">✏️ تعديل القائمة</button>
         <button class="btn btn-blue" style="flex:1" onclick="openTransferModal()">🔄 نقل أعداد</button>
+        <button class="btn btn-outline btn-sm" onclick="printGradeTable()" title="طباعة الجدول Ctrl+P" style="padding:8px 12px">🖨️</button>
       </div>
     </div>
 
@@ -2342,6 +2397,17 @@ applyLang();
 updateSortBtn();
 document.getElementById('absence-date').value=new Date().toISOString().split('T')[0];
 
+// Ctrl+P → print grade table directly
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey&&e.key==='p'){
+    const activePage=document.querySelector('.page.active');
+    if(activePage&&activePage.id==='page-students'){
+      e.preventDefault();
+      printGradeTable();
+    }
+  }
+});
+
 
 // TRANSFER GRADES
 function openTransferModal(){
@@ -3512,6 +3578,101 @@ function printCahierEntry(id){
   setTimeout(()=>area.innerHTML='', 500);
 }
 
+// ══════════════════════════════════════
+//  PRINT GRADE TABLE (Ctrl+P direct)
+// ══════════════════════════════════════
+function printGradeTable(){
+  const d=getCData();
+  if(!d){alert('اختر قسماً أولاً!');return;}
+  const students=getStudents();
+  if(!students.length){alert('ما فماش تلاميذ!');return;}
+
+  const cls=getClasses().find(c=>c.id===currentClassId);
+  const clsName=cls?cls.name:'';
+  const comps=getComponents();
+  const st=currentTrim;
+  const trimLabel={1:t('trim1'),2:t('trim2'),3:t('trim3')}[st].replace(/^📘 |^📗 |^📙 /,'');
+  const institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
+  const teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
+  const subjectName=getSubject()?getSubject().name:'';
+  const today=new Date().toLocaleDateString('ar-TN');
+
+  // stats
+  const avgs=students.map(s=>parseFloat(moyenne(s.id,st))).filter(v=>!isNaN(v));
+  const passing=avgs.filter(v=>v>=10).length;
+  const failing=avgs.filter(v=>v<10).length;
+  const classAvg=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):'—';
+
+  // table header
+  const thCols=comps.map(c=>`<th>${c.name}</th>`).join('');
+  const rows=students.map((s,i)=>{
+    const moy=parseFloat(moyenne(s.id,st));
+    const moyStr=isNaN(moy)?'—':moy.toFixed(2);
+    const passCls=isNaN(moy)?'':moy>=10?'pass':'fail';
+    const result=isNaN(moy)?'—':moy>=10?'ناجح ✓':'راسب ✗';
+    const tdCols=comps.map(c=>{
+      const v=getNote(s.id,st,c.id);
+      return `<td>${v!==null&&v!==''?parseFloat(v).toFixed(2):'—'}</td>`;
+    }).join('');
+    return `<tr>
+      <td>${i+1}</td>
+      <td style="text-align:right;direction:rtl">${s.nom}</td>
+      ${tdCols}
+      <td class="print-avg ${passCls}">${moyStr}</td>
+      <td class="${passCls}">${result}</td>
+    </tr>`;
+  }).join('');
+
+  const html=`
+    <div class="print-header">
+      ${institution?`<div style="font-size:0.85rem;color:#555;margin-bottom:4px">${institution}</div>`:''}
+      <div class="print-title">📋 كشف الأعداد — ${clsName}</div>
+      <div class="print-sub">
+        ${subjectName?subjectName+' — ':''}${trimLabel} — السنة الدراسية ${currentSchoolYear}
+      </div>
+      ${teacher?`<div class="print-sub">الأستاذ: ${teacher}</div>`:''}
+      <div class="print-sub" style="margin-top:6px;font-size:0.8rem;color:#888">تاريخ الطباعة: ${today}</div>
+    </div>
+
+    <table class="print-grade-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th style="text-align:right;padding-right:10px">الاسم واللقب</th>
+          ${thCols}
+          <th>المعدل /20</th>
+          <th>النتيجة</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="text-align:right;padding-right:10px">إحصائيات القسم</td>
+          <td colspan="${comps.length}"></td>
+          <td>${classAvg}</td>
+          <td style="font-size:9pt">✓${passing} / ✗${failing}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div style="margin-top:20px;display:flex;gap:30px;font-size:10pt;border-top:1px solid #ccc;padding-top:10px;">
+      <span>✅ ناجح: <strong>${passing}</strong></span>
+      <span>❌ راسب: <strong>${failing}</strong></span>
+      <span>📈 معدل القسم: <strong>${classAvg}</strong></span>
+      <span>👥 المجموع: <strong>${students.length}</strong></span>
+    </div>
+
+    <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:10pt;border-top:1px dashed #ccc;padding-top:12px;">
+      <div>توقيع الأستاذ: _______________</div>
+      <div>ختم المؤسسة: _______________</div>
+    </div>`;
+
+  const area=document.getElementById('print-area');
+  area.innerHTML=html;
+  window.print();
+  setTimeout(()=>area.innerHTML='',800);
+}
+
 function printAllCahier(){
   const cahier=getCahierData();
   const filterClass=document.getElementById('cahier-filter-class')?.value||'';
@@ -3575,7 +3736,12 @@ function printAllCahier(){
     <div class="modal-title">🎡 عجلة الأسماء</div>
     <div class="wheel-container">
       <canvas id="wheel-canvas" class="wheel-canvas"></canvas>
-      <div class="wheel-pointer">⬆️</div>
+      <div class="wheel-pointer">
+        <svg width="32" height="44" viewBox="0 0 32 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,44 2,6 30,6" fill="#f0a830" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/>
+          <polygon points="16,4 4,4 4,16 16,4" fill="white" opacity="0.3"/>
+        </svg>
+      </div>
     </div>
     <div class="wheel-winner" id="wheel-winner"></div>
     <div class="wheel-winner-sub" id="wheel-winner-sub"></div>
