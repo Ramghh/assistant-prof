@@ -3582,41 +3582,44 @@ function printCahierEntry(id){
 //  PRINT GRADE TABLE (Ctrl+P direct)
 // ══════════════════════════════════════
 function printGradeTable(){
-  const d=getCData();
+  const cid=currentClassId;
+  const sid=currentSubjectId;
+  const d=getCData(cid);
   if(!d){alert('اختر قسماً أولاً!');return;}
-  const students=getStudents();
+  const students=getStudents(cid);
   if(!students.length){alert('ما فماش تلاميذ!');return;}
 
-  const cls=getClasses().find(c=>c.id===currentClassId);
+  const cls=getClasses().find(c=>c.id===cid);
   const clsName=cls?cls.name:'';
-  const comps=getComponents();
+  const comps=getComponents(sid);
   const st=currentTrim;
   const trimLabel={1:t('trim1'),2:t('trim2'),3:t('trim3')}[st].replace(/^📘 |^📗 |^📙 /,'');
   const institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
-  const teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
-  const subjectName=getSubject()?getSubject().name:'';
+  const teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+cid)||'';
+  const subjectName=getSubject(sid)?getSubject(sid).name:'';
   const today=new Date().toLocaleDateString('ar-TN');
 
-  // stats
-  const avgs=students.map(s=>parseFloat(moyenne(s.id,st))).filter(v=>!isNaN(v));
+  // stats — pass cid AND sid correctly
+  const avgs=students.map(s=>parseFloat(moyenne(s.id,st,cid,sid))).filter(v=>!isNaN(v));
   const passing=avgs.filter(v=>v>=10).length;
   const failing=avgs.filter(v=>v<10).length;
   const classAvg=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):'—';
 
-  // table header
-  const thCols=comps.map(c=>`<th>${c.name}</th>`).join('');
+  // table rows
+  const thCols=comps.map(c=>`<th>${c.name}<br><span style="font-weight:400;font-size:8.5pt;opacity:0.7">(${c.w}%)</span></th>`).join('');
   const rows=students.map((s,i)=>{
-    const moy=parseFloat(moyenne(s.id,st));
+    const moy=parseFloat(moyenne(s.id,st,cid,sid));
     const moyStr=isNaN(moy)?'—':moy.toFixed(2);
     const passCls=isNaN(moy)?'':moy>=10?'pass':'fail';
     const result=isNaN(moy)?'—':moy>=10?'ناجح ✓':'راسب ✗';
+    // pass cid explicitly to getNote
     const tdCols=comps.map(c=>{
-      const v=getNote(s.id,st,c.id);
+      const v=getNote(s.id,st,c.id,cid);
       return `<td>${v!==null&&v!==''?parseFloat(v).toFixed(2):'—'}</td>`;
     }).join('');
     return `<tr>
       <td>${i+1}</td>
-      <td style="text-align:right;direction:rtl">${s.nom}</td>
+      <td style="text-align:right;direction:rtl;padding-right:8px">${s.nom}</td>
       ${tdCols}
       <td class="print-avg ${passCls}">${moyStr}</td>
       <td class="${passCls}">${result}</td>
@@ -3669,8 +3672,11 @@ function printGradeTable(){
 
   const area=document.getElementById('print-area');
   area.innerHTML=html;
-  window.print();
-  setTimeout(()=>area.innerHTML='',800);
+  // give browser a frame to render the DOM before opening print dialog
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    window.print();
+    setTimeout(()=>area.innerHTML='',1000);
+  }));
 }
 
 function printAllCahier(){
