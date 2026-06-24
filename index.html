@@ -280,6 +280,19 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
 .auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
 .auth-forgot a:hover{text-decoration:underline;}
+/* ══ MICRO-INTERACTIONS ══ */
+@keyframes saveFlash{0%{background:var(--gold);color:#1a1208;transform:scale(1.06);}60%{transform:scale(1);}100%{background:inherit;color:inherit;}}
+@keyframes rowSlideIn{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:translateX(0);}}
+@keyframes badgePop{0%{transform:scale(1);}40%{transform:scale(1.22);}70%{transform:scale(0.95);}100%{transform:scale(1);}}
+@keyframes trimFade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes inputSaved{0%{border-color:var(--gold);box-shadow:0 0 0 3px rgba(240,168,48,0.25);}100%{border-color:var(--border);box-shadow:none;}}
+
+.btn-save-flash{animation:saveFlash 0.6s ease forwards!important;}
+.row-new{animation:rowSlideIn 0.35s cubic-bezier(.25,.46,.45,.94) forwards;}
+.badge-pop{animation:badgePop 0.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+.trim-fade{animation:trimFade 0.25s ease forwards;}
+.input-saved{animation:inputSaved 0.8s ease forwards;}
+
 /* ══ TIMER MODAL ══ */
 #timer-modal .modal{max-width:400px;text-align:center;padding:28px 20px;}
 .timer-display{font-size:4.5rem;font-weight:800;font-family:'Courier New',monospace;color:var(--gold);letter-spacing:4px;margin:10px 0;line-height:1;text-shadow:0 0 30px rgba(240,168,48,0.3);}
@@ -1029,7 +1042,19 @@ function updateLastEdit(){
 function manualSave(){
   flushPending();saveAll();
   const btns=document.querySelectorAll('.btn-save');
-  btns.forEach(b=>{const o=b.textContent;b.textContent=t('saved_ok');setTimeout(()=>b.textContent=o,1500);});
+  btns.forEach(b=>{
+    const o=b.textContent;
+    b.textContent=t('saved_ok');
+    b.classList.add('btn-save-flash');
+    setTimeout(()=>{b.textContent=o;b.classList.remove('btn-save-flash');},1500);
+  });
+  // pop all visible badges
+  document.querySelectorAll('#student-tbody .badge').forEach(el=>{
+    el.classList.remove('badge-pop');
+    void el.offsetWidth; // reflow
+    el.classList.add('badge-pop');
+    setTimeout(()=>el.classList.remove('badge-pop'),400);
+  });
 }
 
 // ══════════════════════════════════════
@@ -1671,7 +1696,14 @@ function bufferNote(sid,trim,field,val,snapCid,inputEl){
       inputEl.classList.add('invalid');
     } else {
       inputEl.classList.remove('invalid');
-      if(!isNaN(num)&&val!==''){val=Math.min(20,Math.max(0,num));}
+      if(!isNaN(num)&&val!==''){
+        val=Math.min(20,Math.max(0,num));
+        // subtle glow on valid input
+        inputEl.classList.remove('input-saved');
+        void inputEl.offsetWidth;
+        inputEl.classList.add('input-saved');
+        setTimeout(()=>inputEl.classList.remove('input-saved'),800);
+      }
     }
   }
   if(!pendingNotes[cid])pendingNotes[cid]={};
@@ -1875,6 +1907,9 @@ function setTrim(n,btn){
   btn.classList.add('active');
   document.getElementById('trim-label').textContent={1:t('trim1'),2:t('trim2'),3:t('trim3')}[n].replace(/^📘 |^📗 |^📙 /,'');
   renderTable();
+  // fade-in tbody
+  const tbody=document.getElementById('student-tbody');
+  if(tbody){tbody.classList.remove('trim-fade');void tbody.offsetWidth;tbody.classList.add('trim-fade');setTimeout(()=>tbody.classList.remove('trim-fade'),250);}
 }
 
 // ══════════════════════════════════════
