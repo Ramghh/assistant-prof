@@ -280,6 +280,30 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
 .auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
 .auth-forgot a:hover{text-decoration:underline;}
+/* ══ QUICK EVAL (مفكرة التقييم) ══ */
+#eval-modal .modal{max-width:480px;padding:20px 16px;}
+.eval-search{margin-bottom:12px;}
+.eval-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto;padding-left:2px;}
+.eval-row{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:10px;padding:8px 10px;border:1.5px solid transparent;transition:border-color 0.2s;}
+.eval-row:hover{border-color:var(--border);}
+.eval-name{flex:1;font-weight:700;font-size:0.95rem;direction:rtl;text-align:right;}
+.eval-stars{display:flex;gap:3px;align-items:center;min-width:70px;justify-content:center;}
+.eval-star{font-size:0.85rem;opacity:0.25;transition:opacity 0.15s;}
+.eval-star.active{opacity:1;}
+.eval-score{min-width:28px;text-align:center;font-weight:800;font-size:1rem;color:var(--gold);}
+.eval-score.neg{color:var(--red);}
+.eval-score.zero{color:var(--text2);}
+.eval-btn{width:34px;height:34px;border-radius:50%;border:2px solid;font-size:1.1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;background:none;flex-shrink:0;}
+.eval-btn-plus{border-color:var(--green);color:var(--green);}
+.eval-btn-plus:hover,.eval-btn-plus:active{background:var(--green);color:#fff;transform:scale(1.15);}
+.eval-btn-minus{border-color:var(--red);color:var(--red);}
+.eval-btn-minus:hover,.eval-btn-minus:active{background:var(--red);color:#fff;transform:scale(1.15);}
+.eval-reset-btn{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:none;color:var(--text2);font-size:0.75rem;cursor:pointer;flex-shrink:0;}
+.eval-reset-btn:hover{border-color:var(--gold);color:var(--gold);}
+.eval-footer{margin-top:14px;display:flex;gap:8px;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px;flex-wrap:wrap;}
+.eval-summary{font-size:0.82rem;color:var(--text2);}
+.eval-date-badge{font-size:0.75rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:3px 8px;color:var(--text2);}
+
 /* ══ MICRO-INTERACTIONS ══ */
 @keyframes saveFlash{0%{background:var(--gold);color:#1a1208;transform:scale(1.06);}60%{transform:scale(1);}100%{background:inherit;color:inherit;}}
 @keyframes rowSlideIn{from{opacity:0;transform:translateX(18px);}to{opacity:1;transform:translateX(0);}}
@@ -707,6 +731,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         <button class="btn btn-save" style="flex:1" onclick="manualSave()">💾 حفظ الأعداد</button>
         <button class="btn btn-outline" style="flex:1" onclick="openEditAllModal()">✏️ تعديل القائمة</button>
         <button class="btn btn-blue" style="flex:1" onclick="openTransferModal()">🔄 نقل أعداد</button>
+        <button class="btn btn-outline btn-sm" onclick="openEval()" title="مفكرة التقييم السريع" style="padding:8px 12px">📝</button>
         <button class="btn btn-outline btn-sm" onclick="printGradeTable()" title="طباعة الجدول Ctrl+P" style="padding:8px 12px">🖨️</button>
       </div>
     </div>
@@ -3505,6 +3530,40 @@ function addCahierEntry(){
   if(btn){const orig=btn.textContent;btn.textContent='✅ تم الحفظ!';btn.style.background='#27ae60';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1800);}
 }
 
+function repeatCahierEntry(id){
+  const yd=getYearData();
+  if(!yd||!yd.cahier)return;
+  const src=yd.cahier.find(e=>e.id===id);
+  if(!src)return;
+
+  // ask for new date
+  const newDate=prompt('تاريخ الحصة الجديدة (YYYY-MM-DD):', new Date().toISOString().split('T')[0]);
+  if(!newDate)return;
+
+  // copy entry with new id and date
+  const newEntry={
+    ...src,
+    id:'ch'+Date.now(),
+    date:newDate,
+    createdAt:new Date().toISOString()
+  };
+
+  yd.cahier.unshift(newEntry);
+  saveAll();
+  renderCahier();
+
+  // flash feedback
+  const list=document.getElementById('cahier-list');
+  if(list){
+    const first=list.firstElementChild;
+    if(first){
+      first.style.transition='box-shadow 0.3s';
+      first.style.boxShadow='0 0 0 3px var(--gold)';
+      setTimeout(()=>first.style.boxShadow='',1200);
+    }
+  }
+}
+
 function deleteCahierEntry(id){
   if(!confirm('تحذف هذه الحصة؟'))return;
   const yd=getYearData();if(!yd||!yd.cahier)return;
@@ -3547,6 +3606,7 @@ function renderCahier(){
 
     return `<div class="cahier-entry">
       <div style="position:absolute;top:10px;left:10px;display:flex;gap:6px;">
+        <button class="cahier-del-btn" onclick="repeatCahierEntry('${e.id}')" title="تكرار الحصة" style="position:static;opacity:0.6;font-size:0.85rem">🔁</button>
         <button class="cahier-del-btn" onclick="printCahierEntry('${e.id}')" title="طباعة / PDF" style="position:static;opacity:0.6;font-size:0.85rem">🖨️</button>
         <button class="cahier-del-btn" onclick="deleteCahierEntry('${e.id}')" title="حذف" style="position:static">🗑️</button>
       </div>
@@ -3710,6 +3770,149 @@ function printGradeTable(){
 <div class="sig">
   <div>توقيع الأستاذ: _______________</div>
   <div>ختم المؤسسة: _______________</div>
+</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`);
+  win.document.close();
+}
+
+// ══════════════════════════════════════
+//  QUICK EVAL — مفكرة التقييم السريع
+// ══════════════════════════════════════
+let evalScores = {}; // {studentId: score}
+let evalDate = '';
+
+function openEval(){
+  const students=getStudents();
+  if(!students.length){alert('اختر قسماً أولاً!');return;}
+  // new session if different day
+  const today=new Date().toISOString().split('T')[0];
+  if(evalDate!==today){ evalScores={}; evalDate=today; }
+  document.getElementById('eval-date-badge').textContent=
+    new Date().toLocaleDateString('ar-TN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('eval-search').value='';
+  document.getElementById('eval-modal').classList.add('open');
+  renderEval();
+}
+
+function renderEval(){
+  const students=getStudents();
+  const search=document.getElementById('eval-search').value.toLowerCase();
+  const filtered=students.filter(s=>s.nom.toLowerCase().includes(search));
+  const list=document.getElementById('eval-list');
+
+  list.innerHTML=filtered.map(s=>{
+    const sc=evalScores[s.id]||0;
+    const stars=Math.min(5,Math.max(0,sc));
+    const starsHTML=[1,2,3,4,5].map(i=>
+      `<span class="eval-star${i<=stars?' active':''}">⭐</span>`
+    ).join('');
+    const scoreClass=sc>0?'':'eval-score'+(sc<0?' neg':' zero');
+    return `<div class="eval-row" id="eval-row-${s.id}">
+      <button class="eval-btn eval-btn-minus" onclick="evalChange(${s.id},-1)">−</button>
+      <span class="eval-score ${scoreClass}" id="eval-sc-${s.id}">${sc>0?'+'+sc:sc}</span>
+      <div class="eval-stars" id="eval-stars-${s.id}">${starsHTML}</div>
+      <span class="eval-name">${s.nom}</span>
+      <button class="eval-reset-btn" onclick="evalReset(${s.id})" title="مسح">✕</button>
+      <button class="eval-btn eval-btn-plus" onclick="evalChange(${s.id},+1)">+</button>
+    </div>`;
+  }).join('');
+
+  updateEvalSummary();
+}
+
+function evalChange(sid, delta){
+  evalScores[sid]=(evalScores[sid]||0)+delta;
+  // update score display
+  const sc=evalScores[sid];
+  const scEl=document.getElementById('eval-sc-'+sid);
+  if(scEl){
+    scEl.textContent=sc>0?'+'+sc:sc;
+    scEl.className='eval-score'+(sc>0?'':sc<0?' neg':' zero');
+    // pop animation
+    scEl.style.transform='scale(1.4)';
+    setTimeout(()=>scEl.style.transform='',200);
+  }
+  // update stars
+  const stars=Math.min(5,Math.max(0,sc));
+  const starsEl=document.getElementById('eval-stars-'+sid);
+  if(starsEl){
+    starsEl.querySelectorAll('.eval-star').forEach((el,i)=>{
+      el.classList.toggle('active',i<stars);
+    });
+  }
+  updateEvalSummary();
+}
+
+function evalReset(sid){
+  evalScores[sid]=0;
+  evalChange(sid,0); // re-render row
+  const scEl=document.getElementById('eval-sc-'+sid);
+  if(scEl){scEl.textContent='0';scEl.className='eval-score zero';}
+  const starsEl=document.getElementById('eval-stars-'+sid);
+  if(starsEl) starsEl.querySelectorAll('.eval-star').forEach(el=>el.classList.remove('active'));
+  updateEvalSummary();
+}
+
+function resetEval(){
+  if(!confirm('مسح كل التقييمات؟')) return;
+  evalScores={};
+  renderEval();
+}
+
+function updateEvalSummary(){
+  const scores=Object.values(evalScores).filter(v=>v!==0);
+  const pos=scores.filter(v=>v>0).length;
+  const neg=scores.filter(v=>v<0).length;
+  const el=document.getElementById('eval-summary');
+  if(el) el.textContent=`✅ ${pos} ممتاز  —  ⚠️ ${neg} يحتاج متابعة`;
+}
+
+function exportEval(){
+  const students=getStudents();
+  const today=new Date().toLocaleDateString('ar-TN');
+  const cls=getClasses().find(c=>c.id===currentClassId);
+  const clsName=cls?cls.name:'';
+
+  const rows=students.map((s,i)=>{
+    const sc=evalScores[s.id]||0;
+    const emoji=sc>=3?'⭐⭐⭐':sc>=1?'⭐⭐':sc===0?'—':sc===-1?'⚠️':'❌';
+    return `<tr>
+      <td>${i+1}</td>
+      <td style="text-align:right;direction:rtl;padding-right:8px;font-weight:700">${s.nom}</td>
+      <td style="text-align:center;font-size:1.1rem">${emoji}</td>
+      <td style="text-align:center;font-weight:800;color:${sc>0?'#1a7a48':sc<0?'#c03020':'#555'}">${sc>0?'+'+sc:sc}</td>
+    </tr>`;
+  }).join('');
+
+  const pos=Object.values(evalScores).filter(v=>v>0).length;
+  const neg=Object.values(evalScores).filter(v=>v<0).length;
+
+  const win=window.open('','_blank','width=700,height=600');
+  if(!win){alert('السماح بالنوافذ المنبثقة!');return;}
+  win.document.write(`<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>تقييم ${clsName}</title>
+<style>
+  body{font-family:"Amiri",serif;direction:rtl;padding:20px;color:#000;}
+  h2{text-align:center;margin-bottom:4px;}
+  .sub{text-align:center;color:#555;font-size:0.9rem;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;}
+  th{background:#1a1a2e;color:#fff;padding:8px;border:1px solid #999;}
+  td{padding:7px 6px;border:1px solid #ddd;}
+  tr:nth-child(even) td{background:#f5f5f5;}
+  .stats{margin-top:16px;display:flex;gap:20px;font-size:0.9rem;border-top:1px solid #ccc;padding-top:10px;}
+  @media print{@page{margin:10mm;}}
+</style></head><body>
+<h2>📝 تقرير التقييم اليومي — ${clsName}</h2>
+<div class="sub">${today}</div>
+<table>
+  <thead><tr><th>#</th><th>الاسم واللقب</th><th>التقييم</th><th>النقاط</th></tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div class="stats">
+  <span>✅ ممتاز: <strong>${pos}</strong></span>
+  <span>⚠️ يحتاج متابعة: <strong>${neg}</strong></span>
+  <span>👥 المجموع: <strong>${students.length}</strong></span>
 </div>
 <script>window.onload=function(){window.print();}<\/script>
 </body></html>`);
@@ -3948,6 +4151,26 @@ function printAllCahier(){
     <div class="wheel-remaining" id="wheel-remaining"></div>
   </div>
 </div>
+<!-- QUICK EVAL MODAL -->
+<div class="modal-overlay" id="eval-modal">
+  <div class="modal" style="position:relative">
+    <div class="modal-title">📝 مفكرة التقييم السريع</div>
+    <div class="eval-date-badge" id="eval-date-badge"></div>
+    <div class="eval-search">
+      <input type="text" id="eval-search" placeholder="🔍 ابحث..." oninput="renderEval()" style="margin-top:8px"/>
+    </div>
+    <div class="eval-list" id="eval-list"></div>
+    <div class="eval-footer">
+      <div class="eval-summary" id="eval-summary"></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="resetEval()">🔄 مسح الكل</button>
+        <button class="btn btn-gold btn-sm" onclick="exportEval()">📄 تصدير</button>
+        <button class="btn btn-danger btn-sm" onclick="closeModal('eval-modal')">✕</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TIMER MODAL -->
 <div class="modal-overlay" id="timer-modal">
   <div class="modal" style="position:relative">
