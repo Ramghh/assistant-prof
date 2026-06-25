@@ -4090,7 +4090,7 @@ function saveAIKey(val){
 function updateAIKeyStatus(key){
   const el=document.getElementById('ai-key-status');
   if(!el) return;
-  if(key&&key.startsWith('AIza')&&key.length>20){
+  if(key&&key.length>20){
     el.textContent='✅ جاهز';el.style.color='var(--green)';
   } else if(key){
     el.textContent='⚠️ تحقق';el.style.color='var(--orange)';
@@ -4140,7 +4140,7 @@ ${rows}
 
 async function sendAI(){
   const key=localStorage.getItem('gemini_key')||'';
-  if(!key||!key.startsWith('AIza')){
+  if(!key||key.length<20){
     alert('حط API Key تاع Gemini أولاً!');return;
   }
   const inp=document.getElementById('ai-input');
@@ -4173,7 +4173,7 @@ async function sendAI(){
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
       {
         method:'POST',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','x-goog-api-key':key},
         body:JSON.stringify({contents, generationConfig:{maxOutputTokens:800,temperature:0.7}})
       }
     );
@@ -4303,7 +4303,7 @@ function printAllCahier(){
     <!-- API Key bar -->
     <div class="ai-key-bar">
       <span style="font-size:0.8rem;color:var(--text2);white-space:nowrap">🔑 API Key:</span>
-      <input type="password" id="ai-key-input" placeholder="AIza..." oninput="saveAIKey(this.value)"/>
+      <input type="password" id="ai-key-input" placeholder="AIza... أو AQ..." oninput="saveAIKey(this.value)"/>
       <span class="ai-key-status" id="ai-key-status">—</span>
     </div>
 
