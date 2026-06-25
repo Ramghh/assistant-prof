@@ -280,7 +280,24 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
 .auth-forgot{text-align:center;font-size:0.78rem;margin-top:10px;}
 .auth-forgot a{color:#5a9fd4;cursor:pointer;text-decoration:none;}
 .auth-forgot a:hover{text-decoration:underline;}
-/* ══ QUICK EVAL (مفكرة التقييم) ══ */
+/* ══ AI ASSISTANT ══ */
+#ai-modal .modal{max-width:500px;padding:20px 16px;display:flex;flex-direction:column;height:80vh;}
+.ai-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px;margin-bottom:12px;}
+.ai-msg{padding:10px 13px;border-radius:12px;font-size:0.92rem;line-height:1.55;max-width:90%;}
+.ai-msg.user{background:var(--gold);color:#1a1208;align-self:flex-end;border-radius:12px 12px 4px 12px;font-weight:600;}
+.ai-msg.ai{background:var(--surface2);color:var(--text);align-self:flex-start;border-radius:12px 12px 12px 4px;border:1px solid var(--border);}
+.ai-msg.loading{opacity:0.6;font-style:italic;}
+.ai-msg.error{background:#ff505022;border:1px solid var(--red);color:var(--red);}
+.ai-input-row{display:flex;gap:8px;align-items:flex-end;}
+.ai-input-row textarea{flex:1;min-height:44px;max-height:120px;resize:none;font-size:0.9rem;padding:10px 12px;border-radius:10px;}
+.ai-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.ai-suggestion{padding:5px 10px;border-radius:16px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text2);font-size:0.78rem;cursor:pointer;transition:all 0.2s;font-family:'Amiri',serif;}
+.ai-suggestion:hover{border-color:var(--gold);color:var(--gold);}
+.ai-key-bar{display:flex;gap:6px;align-items:center;margin-bottom:10px;padding:8px 10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);}
+.ai-key-bar input{flex:1;font-size:0.78rem;padding:4px 8px;min-width:0;}
+.ai-key-status{font-size:0.75rem;white-space:nowrap;}
+
+/* ══ QUICK EVAL ══ */
 #eval-modal .modal{max-width:480px;padding:20px 16px;}
 .eval-search{margin-bottom:12px;}
 .eval-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow-y:auto;padding-left:2px;}
@@ -679,6 +696,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   <button class="nav-btn" onclick="showPage('absence',this)">📋 سجل الغياب</button>
   <button class="nav-btn" onclick="showPage('cahier',this);initCahier()">📓 كراس القسم</button>
   <button class="nav-btn" onclick="openTimer()">⏱️ مؤقت</button>
+  <button class="nav-btn" onclick="openAI()" style="color:var(--gold)">🤖 AI</button>
 </div>
 
 <!-- SAVE BANNER -->
@@ -4051,6 +4069,130 @@ document.addEventListener('keydown',function(e){
 });
 
 // ══════════════════════════════════════
+//  AI ASSISTANT — Gemini
+// ══════════════════════════════════════
+let aiHistory = [];
+
+function openAI(){
+  document.getElementById('ai-modal').classList.add('open');
+  // load saved key
+  const saved=localStorage.getItem('gemini_key')||'';
+  const inp=document.getElementById('ai-key-input');
+  if(inp) inp.value=saved;
+  updateAIKeyStatus(saved);
+}
+
+function saveAIKey(val){
+  localStorage.setItem('gemini_key', val.trim());
+  updateAIKeyStatus(val.trim());
+}
+
+function updateAIKeyStatus(key){
+  const el=document.getElementById('ai-key-status');
+  if(!el) return;
+  if(key&&key.startsWith('AIza')&&key.length>20){
+    el.textContent='✅ جاهز';el.style.color='var(--green)';
+  } else if(key){
+    el.textContent='⚠️ تحقق';el.style.color='var(--orange)';
+  } else {
+    el.textContent='— غير مضبوط';el.style.color='var(--text2)';
+  }
+}
+
+function aiSuggest(btn){
+  const inp=document.getElementById('ai-input');
+  if(inp){ inp.value=btn.textContent; inp.focus(); }
+}
+
+function aiGetContext(){
+  // build context from current class data
+  const cls=getClasses().find(c=>c.id===currentClassId);
+  const clsName=cls?cls.name:'غير محدد';
+  const students=getStudents();
+  const comps=getComponents();
+  const st=currentTrim;
+  const trimLabel={1:'الثلاثي الأول',2:'الثلاثي الثاني',3:'الثلاثي الثالث'}[st];
+
+  if(!students.length) return `القسم: ${clsName}، لا يوجد تلاميذ.`;
+
+  const rows=students.map(s=>{
+    const moy=moyenne(s.id,st,currentClassId,currentSubjectId);
+    const grades=comps.map(c=>{
+      const v=getNote(s.id,st,c.id,currentClassId);
+      return `${c.name}:${v!==''?v:'—'}`;
+    }).join(', ');
+    return `- ${s.nom}: [${grades}] → معدل: ${moy||'—'}`;
+  }).join('\n');
+
+  const avgs=students.map(s=>parseFloat(moyenne(s.id,st,currentClassId,currentSubjectId))).filter(v=>!isNaN(v));
+  const classAvg=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):'—';
+  const passing=avgs.filter(v=>v>=10).length;
+
+  return `أنت مساعد تربوي ذكي متخصص في التعليم التونسي.
+القسم: ${clsName} | ${trimLabel} | السنة: ${currentSchoolYear}
+معدل القسم: ${classAvg}/20 | ناجحون: ${passing}/${students.length}
+
+بيانات التلاميذ:
+${rows}
+
+أجب بالعربية، بشكل مختصر وعملي ومفيد للأستاذ.`;
+}
+
+async function sendAI(){
+  const key=localStorage.getItem('gemini_key')||'';
+  if(!key||!key.startsWith('AIza')){
+    alert('حط API Key تاع Gemini أولاً!');return;
+  }
+  const inp=document.getElementById('ai-input');
+  const question=inp.value.trim();
+  if(!question) return;
+  inp.value='';
+
+  const msgs=document.getElementById('ai-messages');
+
+  // add user message
+  aiHistory.push({role:'user',parts:[{text:question}]});
+  msgs.innerHTML+=`<div class="ai-msg user">${question}</div>`;
+
+  // add loading
+  const loadId='ai-load-'+Date.now();
+  msgs.innerHTML+=`<div class="ai-msg loading" id="${loadId}">⏳ جاري التحليل...</div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+
+  try{
+    const context=aiGetContext();
+    // build messages with context in first turn
+    const contents=aiHistory.map((m,i)=>({
+      role:m.role,
+      parts: i===0&&m.role==='user'
+        ? [{text: context+'\n\nسؤال الأستاذ: '+m.parts[0].text}]
+        : m.parts
+    }));
+
+    const res=await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents, generationConfig:{maxOutputTokens:800,temperature:0.7}})
+      }
+    );
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const reply=data.candidates?.[0]?.content?.parts?.[0]?.text||'ما فهمتش السؤال، عاود حاول.';
+    aiHistory.push({role:'model',parts:[{text:reply}]});
+
+    // replace loading with reply
+    document.getElementById(loadId).outerHTML=
+      `<div class="ai-msg ai">${reply.replace(/\n/g,'<br>')}</div>`;
+  } catch(e){
+    document.getElementById(loadId).outerHTML=
+      `<div class="ai-msg error">❌ خطأ: ${e.message}</div>`;
+  }
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ══════════════════════════════════════
 //  CLEAR CACHE
 // ══════════════════════════════════════
 function clearCache(){
@@ -4153,6 +4295,40 @@ function printAllCahier(){
     <div class="wheel-remaining" id="wheel-remaining"></div>
   </div>
 </div>
+<!-- AI ASSISTANT MODAL -->
+<div class="modal-overlay" id="ai-modal">
+  <div class="modal" style="position:relative">
+    <div class="modal-title">🤖 المساعد الذكي — Gemini</div>
+
+    <!-- API Key bar -->
+    <div class="ai-key-bar">
+      <span style="font-size:0.8rem;color:var(--text2);white-space:nowrap">🔑 API Key:</span>
+      <input type="password" id="ai-key-input" placeholder="AIza..." oninput="saveAIKey(this.value)"/>
+      <span class="ai-key-status" id="ai-key-status">—</span>
+    </div>
+
+    <!-- Suggestions -->
+    <div class="ai-suggestions" id="ai-suggestions">
+      <button class="ai-suggestion" onclick="aiSuggest(this)">شكون التلاميذ الضعاف؟</button>
+      <button class="ai-suggestion" onclick="aiSuggest(this)">قيّم نتائج القسم</button>
+      <button class="ai-suggestion" onclick="aiSuggest(this)">اقترح أنشطة للمستوى المتوسط</button>
+      <button class="ai-suggestion" onclick="aiSuggest(this)">كيفاش نحسن المعدل العام؟</button>
+    </div>
+
+    <!-- Messages -->
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg ai">مرحباً! أنا مساعدك الذكي 🤖<br>اسألني عن تلاميذك وأنا نحللهم وأعطيك توصيات.</div>
+    </div>
+
+    <!-- Input -->
+    <div class="ai-input-row">
+      <textarea id="ai-input" placeholder="اسألني..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAI();}"></textarea>
+      <button class="btn btn-gold" onclick="sendAI()" style="height:44px;padding:0 16px">▶️</button>
+      <button class="btn btn-danger btn-sm" onclick="closeModal('ai-modal')" style="height:44px">✕</button>
+    </div>
+  </div>
+</div>
+
 <!-- QUICK EVAL MODAL -->
 <div class="modal-overlay" id="eval-modal">
   <div class="modal" style="position:relative">
