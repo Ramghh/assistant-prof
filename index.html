@@ -901,6 +901,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         <div class="form-group">
           <label>🎯 الأهداف — Objectives</label>
           <textarea id="cahier-objectives" rows="2" placeholder="By the end of the lesson, students will be able to..." style="direction:ltr;text-align:left"></textarea>
+          <button class="btn btn-outline btn-sm" onclick="cahierAI('objectives')" style="margin-top:5px;font-size:0.8rem">✨ Gemini — اقترح أهداف</button>
         </div>
         <div class="cahier-row">
           <div class="form-group">
@@ -915,6 +916,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         <div class="form-group">
           <label>📝 المفردات — Vocabulary</label>
           <input type="text" id="cahier-vocab" placeholder="مثال: entertain, leisure, broadcast..."/ style="direction:ltr;text-align:left">
+          <button class="btn btn-outline btn-sm" onclick="cahierAI('vocab')" style="margin-top:5px;font-size:0.8rem">✨ Gemini — اقترح مفردات</button>
         </div>
         <div class="form-group">
           <label>📌 الواجب — Homework <span style="color:var(--text2);font-size:0.78rem">(اختياري)</span></label>
@@ -4161,37 +4163,12 @@ async function sendAI(){
 
   try{
     const context=aiGetContext();
-    // build messages for Groq (OpenAI-compatible format)
-    const messages=[
-      {role:'system', content:context},
-      ...aiHistory.map(m=>({
-        role: m.role==='model'?'assistant':'user',
-        content: m.parts[0].text
-      }))
-    ];
-
-    const res=await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+key
-        },
-        body:JSON.stringify({
-          model:'llama-3.3-70b-versatile',
-          messages,
-          max_tokens:800,
-          temperature:0.7
-        })
-      }
-    );
-    const data=await res.json();
-    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-    const reply=data.choices?.[0]?.message?.content||'ما فهمتش السؤال، عاود حاول.';
+    const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+    const ai = new GoogleGenAI({ apiKey: key });
+    const prompt = context + '\n\nسؤال الأستاذ: ' + question;
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+    const reply = response.text || 'ما فهمتش السؤال، عاود حاول.';
     aiHistory.push({role:'model',parts:[{text:reply}]});
-
-    // replace loading with reply
     document.getElementById(loadId).outerHTML=
       `<div class="ai-msg ai">${reply.replace(/\n/g,'<br>')}</div>`;
   } catch(e){
@@ -4204,6 +4181,52 @@ async function sendAI(){
 // ══════════════════════════════════════
 //  CLEAR CACHE
 // ══════════════════════════════════════
+async function cahierAI(type){
+  const key = localStorage.getItem('gemini_key')||'';
+  if(!key||key.length<20){ alert('حط API Key تاع Gemini أولاً من المساعد الذكي!'); return; }
+
+  const lesson = document.getElementById('cahier-lesson').value.trim();
+  const unit = document.getElementById('cahier-unit').value.trim();
+  const skills = document.getElementById('cahier-skills').value.trim();
+  const structure = document.getElementById('cahier-structure').value.trim();
+
+  if(!lesson){ alert('أدخل عنوان الدرس أولاً'); return; }
+
+  const context = `أنت أستاذ لغة إنجليزية في المرحلة الإعدادية والثانوية في تونس.
+الدرس: ${lesson}
+الوحدة: ${unit||'—'}
+المهارات: ${skills||'—'}
+التراكيب: ${structure||'—'}`;
+
+  const prompts = {
+    objectives: context + '\n\nاكتب 3 أهداف تعليمية بصيغة: "By the end of the lesson, students will be able to..." باللغة الإنجليزية فقط. مختصرة وواضحة.',
+    vocab: context + '\n\nاقترح 8-10 مفردات إنجليزية مناسبة لهذا الدرس. أعطها فقط مفصولة بفواصل (comma) بدون شرح.'
+  };
+
+  const btn = event.target;
+  btn.textContent = '⏳ جاري التوليد...';
+  btn.disabled = true;
+
+  try {
+    const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+    const ai = new GoogleGenAI({ apiKey: key });
+    const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompts[type] });
+    const result = response.text.trim();
+
+    if(type === 'objectives'){
+      document.getElementById('cahier-objectives').value = result;
+    } else {
+      document.getElementById('cahier-vocab').value = result;
+    }
+    btn.textContent = '✅ تم!';
+    setTimeout(()=>{ btn.textContent = type==='objectives'?'✨ Gemini — اقترح أهداف':'✨ Gemini — اقترح مفردات'; btn.disabled=false; }, 2000);
+  } catch(e) {
+    btn.textContent = '❌ خطأ';
+    btn.disabled = false;
+    alert('خطأ: ' + e.message);
+  }
+}
+
 function clearCache(){
   if(!confirm('باش تمسح الكاش المحلي وتعيد تحميل الصفحة.\nبياناتك في السحابة تبقى سالمة ✅\nتكمل؟')) return;
   // 1. clear localStorage (keep auth token so user stays logged in)
@@ -4307,12 +4330,12 @@ function printAllCahier(){
 <!-- AI ASSISTANT MODAL -->
 <div class="modal-overlay" id="ai-modal">
   <div class="modal" style="position:relative">
-    <div class="modal-title">🤖 المساعد الذكي — Groq AI</div>
+    <div class="modal-title">🤖 المساعد الذكي — Gemini ✨</div>
 
     <!-- API Key bar -->
     <div class="ai-key-bar">
       <span style="font-size:0.8rem;color:var(--text2);white-space:nowrap">🔑 API Key:</span>
-      <input type="password" id="ai-key-input" placeholder="gsk_..." oninput="saveAIKey(this.value)"/>
+      <input type="password" id="ai-key-input" placeholder="AQ..." oninput="saveAIKey(this.value)"/>
       <span class="ai-key-status" id="ai-key-status">—</span>
     </div>
 
