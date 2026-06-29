@@ -897,6 +897,11 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
         <div class="form-group">
           <label>📖 الدرس — Lesson</label>
           <input type="text" id="cahier-lesson" placeholder="عنوان الدرس"/ style="direction:ltr;text-align:left">
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <label for="cahier-img-input" class="btn btn-outline btn-sm" style="cursor:pointer;font-size:0.8rem;margin:0">📷 تحليل صور الكتاب</label>
+            <input type="file" id="cahier-img-input" accept="image/*" multiple style="display:none" onchange="cahierAnalyzeImage(this)">
+            <span id="cahier-img-status" style="font-size:0.78rem;color:var(--text2)"></span>
+          </div>
         </div>
         <div class="form-group">
           <label>🎯 الأهداف — Objectives</label>
@@ -4181,6 +4186,83 @@ async function sendAI(){
 // ══════════════════════════════════════
 //  CLEAR CACHE
 // ══════════════════════════════════════
+async function cahierAnalyzeImage(input){
+  const key = localStorage.getItem('gemini_key')||'';
+  if(!key||key.length<20){ alert('حط API Key تاع Gemini أولاً!'); input.value=''; return; }
+
+  const files = Array.from(input.files);
+  if(!files.length) return;
+
+  const statusEl = document.getElementById('cahier-img-status');
+  statusEl.textContent = `⏳ جاري تحليل ${files.length} صورة...`;
+
+  // تحويل كل الصور لـ base64
+  const images = await Promise.all(files.map(file => new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res({ mimeType: file.type, data: reader.result.split(',')[1] });
+    reader.onerror = () => rej(new Error('فشل قراءة الصورة'));
+    reader.readAsDataURL(file);
+  })));
+
+  const prompt = `أنت أستاذ لغة إنجليزية في تونس. حلل هذه الصور من الكتاب المدرسي (${files.length} صورة) واستخرج:
+1. LESSON TITLE: عنوان الدرس بالإنجليزية
+2. UNIT: اسم الوحدة إن وجد
+3. OBJECTIVES: 3 أهداف بصيغة "By the end of the lesson, students will be able to..."
+4. SKILLS: المهارات (Reading/Writing/Speaking/Listening)
+5. VOCABULARY: 8-10 مفردات مفصولة بفواصل
+6. STRUCTURE: التراكيب النحوية إن وجدت
+
+أجب بهذا الشكل فقط بدون شرح إضافي:
+LESSON: ...
+UNIT: ...
+OBJECTIVES: ...
+SKILLS: ...
+VOCABULARY: ...
+STRUCTURE: ...`;
+
+  try {
+    const { GoogleGenAI } = await import('https://esm.run/@google/genai');
+    const ai = new GoogleGenAI({ apiKey: key });
+    const parts = [
+      { text: prompt },
+      ...images.map(img => ({ inlineData: img }))
+    ];
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ parts }]
+    });
+
+    const result = response.text.trim();
+
+    // استخراج البيانات
+    const get = (label) => {
+      const match = result.match(new RegExp(label + ':\\s*(.+?)(?=\\n[A-Z]+:|$)', 's'));
+      return match ? match[1].trim() : '';
+    };
+
+    const lesson = get('LESSON');
+    const unit = get('UNIT');
+    const objectives = get('OBJECTIVES');
+    const skills = get('SKILLS');
+    const vocab = get('VOCABULARY');
+    const structure = get('STRUCTURE');
+
+    if(lesson) document.getElementById('cahier-lesson').value = lesson;
+    if(unit) document.getElementById('cahier-unit').value = unit;
+    if(objectives) document.getElementById('cahier-objectives').value = objectives;
+    if(skills) document.getElementById('cahier-skills').value = skills;
+    if(vocab) document.getElementById('cahier-vocab').value = vocab;
+    if(structure) document.getElementById('cahier-structure').value = structure;
+
+    statusEl.textContent = '✅ تم الاستخراج!';
+    setTimeout(()=>{ statusEl.textContent=''; }, 3000);
+
+  } catch(e) {
+    statusEl.textContent = '❌ ' + (e.message||e);
+  }
+  input.value = '';
+}
+
 async function cahierAI(type){
   const key = localStorage.getItem('gemini_key')||'';
   if(!key||key.length<20){ alert('حط API Key تاع Gemini أولاً من المساعد الذكي!'); return; }
