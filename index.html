@@ -145,7 +145,11 @@ body.light .stbl th{background:#b07830;color:#ffffff;}
 .stbl tr.drag-over td{border-top:2.5px solid var(--gold)!important;}
 
 /* ══ NOTE INPUT ══ */
-.note-input{width:62px;padding:5px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Amiri',serif;font-size:0.9rem;text-align:center;transition:border 0.2s;}
+.note-input{width:62px;padding:5px 2px;border-radius:8px;border:1.5px solid var(--border);background:var(--input-bg);color:var(--text);font-family:'Amiri',serif;font-size:0.9rem;text-align:center;transition:border 0.2s;-moz-appearance:textfield;}
+.note-input::-webkit-outer-spin-button,.note-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+@media (max-width:480px){
+  .note-input{width:50px;font-size:0.82rem;padding:5px 1px;}
+}
 .note-input:focus{border-color:var(--gold);outline:none;}
 .note-input.invalid{border-color:var(--red)!important;background:rgba(220,50,50,0.10);}
 .student-ts{font-size:0.68rem;color:var(--text2);opacity:0.7;display:block;margin-top:1px;}
@@ -2175,7 +2179,7 @@ function renderTable(){
     tr.innerHTML=
       handleCell+
       `<td>${i+1}</td>`+
-      `<td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td>`+
+      `<td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">${s.nom}</td>`+
       comps.map(c=>`<td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,c.id,sc)}" oninput="bufferNote(${s.id},${st},'${c.id}',this.value,'${sc}',this)" placeholder="—"/></td>`).join('')+
       `<td id="badge-${s.id}-${st}">`+
         badgeHTML(moyenne(s.id,st,sc))+
@@ -2246,7 +2250,7 @@ function renderAnnual(){
     const m1=moyenne(s.id,1),m2=moyenne(s.id,2),m3=moyenne(s.id,3),ma=moyenneAnnuelle(s.id);
     const mv=parseFloat(ma);
     const rc=isNaN(mv)?'bn':mv>=10?'bg':'br';
-    return`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td><td>${badgeHTML(m1)}</td><td>${badgeHTML(m2)}</td><td>${badgeHTML(m3)}</td><td>${badgeHTML(ma)}</td><td><span class="badge ${rc}">${isNaN(mv)?'—':mv>=10?'ناجح ✅':'راسب ❌'}</span></td></tr>`;
+    return`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">${s.nom}</td><td>${badgeHTML(m1)}</td><td>${badgeHTML(m2)}</td><td>${badgeHTML(m3)}</td><td>${badgeHTML(ma)}</td><td><span class="badge ${rc}">${isNaN(mv)?'—':mv>=10?'ناجح ✅':'راسب ❌'}</span></td></tr>`;
   }).join('');
 }
 
@@ -2400,7 +2404,7 @@ function doExportWord(){
       students.forEach(function(s,i){
         const notes=comps.map(c=>getNote(s.id,trim,c.id,currentClassId)||'—');
         const moy=getMoy(s.id,trim);const mv=parseFloat(moy);
-        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td>${notes.map(n=>`<td>${n}</td>`).join('')}
+        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">${s.nom}</td>${notes.map(n=>`<td>${n}</td>`).join('')}
           <td style="${colorStyle(mv)}">${moy||'—'}</td></tr>`;
       });
       html+='</tbody></table>';
@@ -2416,7 +2420,7 @@ function doExportWord(){
         const ma=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):null;
         const mv=parseFloat(ma);
         const res=isNaN(mv)?'—':mv>=10?'ناجح ✓':'راسب ✗';
-        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td><td>${m1||'—'}</td><td>${m2||'—'}</td><td>${m3||'—'}</td>
+        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">${s.nom}</td><td>${m1||'—'}</td><td>${m2||'—'}</td><td>${m3||'—'}</td>
           <td style="${colorStyle(mv)}">${ma||'—'}</td><td style="${colorStyle(mv)}">${res}</td></tr>`;
       });
       html+='</tbody></table>';
@@ -2707,7 +2711,7 @@ function renderRapport(){
   tbody.innerHTML=sorted.map(function(s,i){
     var v=s.val;
     var cls=v>=14?'bg':v>=10?'bo':'br';
-    return '<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">'+s.nom+'</td>'+
+    return '<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">'+s.nom+'</td>'+
       '<td><span class="badge '+cls+'">'+v.toFixed(2)+'</span></td>'+
       '<td><span class="badge '+cls+'">'+(v>=10?'ناجح ✅':'راسب ❌')+'</span></td></tr>';
   }).join('');
@@ -2739,7 +2743,7 @@ function exportRapportWord(){
   sorted.forEach(function(s,i){
     var v=s.val;
     var mc=v>=14?'g':v>=10?'m':'b';
-    rows+='<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">'+s.nom+'</td><td class="'+mc+'">'+v.toFixed(2)+'</td><td class="'+mc+'">'+(v>=10?'ناجح':'راسب')+'</td></tr>';
+    rows+='<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">'+s.nom+'</td><td class="'+mc+'">'+v.toFixed(2)+'</td><td class="'+mc+'">'+(v>=10?'ناجح':'راسب')+'</td></tr>';
   });
 
   var html='<html><head><meta charset="utf-8"><style>'+
@@ -3842,7 +3846,7 @@ function printGradeTable(){
   th:nth-child(2){text-align:right;padding-right:8px;}
   td{padding:5px 4px;text-align:center;border:1px solid #ccc;vertical-align:middle;}
   td:first-child{color:#777;font-size:9pt;width:24px;}
-  .name-col{text-align:right;font-weight:700;padding-right:8px;direction:rtl;}
+  .name-col{text-align:right!important;font-weight:700;padding-right:8px!important;direction:rtl;unicode-bidi:plaintext;}
   tr:nth-child(even) td{background:#f5f5f5;}
   .avg{font-weight:800;}
   .pass{color:#1a7a48;}
@@ -3933,7 +3937,7 @@ function renderEval(){
       <button class="eval-btn eval-btn-minus" onclick="evalChange(${s.id},-1)">−</button>
       <span class="eval-score ${scoreClass}" id="eval-sc-${s.id}">${sc>0?'+'+sc:sc}</span>
       <div class="eval-stars" id="eval-stars-${s.id}">${starsHTML}</div>
-      <span class="eval-name" style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</span>
+      <span class="eval-name" style="direction:rtl;unicode-bidi:plaintext;text-align:right!important;padding-right:8px!important">${s.nom}</span>
       <button class="eval-reset-btn" onclick="evalReset(${s.id})" title="مسح">✕</button>
       <button class="eval-btn eval-btn-plus" onclick="evalChange(${s.id},+1)">+</button>
     </div>`;
