@@ -137,7 +137,7 @@ body.light .stbl th{background:#b07830;color:#ffffff;}
 .stbl tr:nth-child(even) td{background:var(--surface2);}
 .stbl tr:hover td{background:var(--border);}
 .stbl td:first-child{color:var(--text2);font-size:0.78rem;}
-.stbl td:nth-child(2){text-align:right;font-weight:700;padding-right:8px;color:var(--text);direction:rtl;unicode-bidi:embed;}
+.stbl td:nth-child(2){text-align:right!important;font-weight:700;padding-right:8px;color:var(--text);direction:rtl;unicode-bidi:plaintext;}
 /* Drag & Drop */
 .drag-handle{cursor:grab;color:var(--text2);font-size:1.1rem;padding:0 4px;opacity:0.4;transition:opacity 0.15s;user-select:none;}
 .drag-handle:hover{opacity:1;color:var(--gold);}
@@ -2175,7 +2175,7 @@ function renderTable(){
     tr.innerHTML=
       handleCell+
       `<td>${i+1}</td>`+
-      `<td style="direction:rtl;unicode-bidi:embed">${s.nom}</td>`+
+      `<td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td>`+
       comps.map(c=>`<td><input class="note-input" type="number" min="0" max="20" step="0.25" value="${getNote(s.id,st,c.id,sc)}" oninput="bufferNote(${s.id},${st},'${c.id}',this.value,'${sc}',this)" placeholder="—"/></td>`).join('')+
       `<td id="badge-${s.id}-${st}">`+
         badgeHTML(moyenne(s.id,st,sc))+
@@ -2246,7 +2246,7 @@ function renderAnnual(){
     const m1=moyenne(s.id,1),m2=moyenne(s.id,2),m3=moyenne(s.id,3),ma=moyenneAnnuelle(s.id);
     const mv=parseFloat(ma);
     const rc=isNaN(mv)?'bn':mv>=10?'bg':'br';
-    return`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed">${s.nom}</td><td>${badgeHTML(m1)}</td><td>${badgeHTML(m2)}</td><td>${badgeHTML(m3)}</td><td>${badgeHTML(ma)}</td><td><span class="badge ${rc}">${isNaN(mv)?'—':mv>=10?'ناجح ✅':'راسب ❌'}</span></td></tr>`;
+    return`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td><td>${badgeHTML(m1)}</td><td>${badgeHTML(m2)}</td><td>${badgeHTML(m3)}</td><td>${badgeHTML(ma)}</td><td><span class="badge ${rc}">${isNaN(mv)?'—':mv>=10?'ناجح ✅':'راسب ❌'}</span></td></tr>`;
   }).join('');
 }
 
@@ -2400,7 +2400,7 @@ function doExportWord(){
       students.forEach(function(s,i){
         const notes=comps.map(c=>getNote(s.id,trim,c.id,currentClassId)||'—');
         const moy=getMoy(s.id,trim);const mv=parseFloat(moy);
-        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed">${s.nom}</td>${notes.map(n=>`<td>${n}</td>`).join('')}
+        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td>${notes.map(n=>`<td>${n}</td>`).join('')}
           <td style="${colorStyle(mv)}">${moy||'—'}</td></tr>`;
       });
       html+='</tbody></table>';
@@ -2416,7 +2416,7 @@ function doExportWord(){
         const ma=avgs.length?(avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2):null;
         const mv=parseFloat(ma);
         const res=isNaN(mv)?'—':mv>=10?'ناجح ✓':'راسب ✗';
-        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed">${s.nom}</td><td>${m1||'—'}</td><td>${m2||'—'}</td><td>${m3||'—'}</td>
+        html+=`<tr><td>${i+1}</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</td><td>${m1||'—'}</td><td>${m2||'—'}</td><td>${m3||'—'}</td>
           <td style="${colorStyle(mv)}">${ma||'—'}</td><td style="${colorStyle(mv)}">${res}</td></tr>`;
       });
       html+='</tbody></table>';
@@ -2707,7 +2707,7 @@ function renderRapport(){
   tbody.innerHTML=sorted.map(function(s,i){
     var v=s.val;
     var cls=v>=14?'bg':v>=10?'bo':'br';
-    return '<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed">'+s.nom+'</td>'+
+    return '<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">'+s.nom+'</td>'+
       '<td><span class="badge '+cls+'">'+v.toFixed(2)+'</span></td>'+
       '<td><span class="badge '+cls+'">'+(v>=10?'ناجح ✅':'راسب ❌')+'</span></td></tr>';
   }).join('');
@@ -2739,7 +2739,7 @@ function exportRapportWord(){
   sorted.forEach(function(s,i){
     var v=s.val;
     var mc=v>=14?'g':v>=10?'m':'b';
-    rows+='<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed">'+s.nom+'</td><td class="'+mc+'">'+v.toFixed(2)+'</td><td class="'+mc+'">'+(v>=10?'ناجح':'راسب')+'</td></tr>';
+    rows+='<tr><td>'+(i+1)+'</td><td style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">'+s.nom+'</td><td class="'+mc+'">'+v.toFixed(2)+'</td><td class="'+mc+'">'+(v>=10?'ناجح':'راسب')+'</td></tr>';
   });
 
   var html='<html><head><meta charset="utf-8"><style>'+
@@ -3933,7 +3933,7 @@ function renderEval(){
       <button class="eval-btn eval-btn-minus" onclick="evalChange(${s.id},-1)">−</button>
       <span class="eval-score ${scoreClass}" id="eval-sc-${s.id}">${sc>0?'+'+sc:sc}</span>
       <div class="eval-stars" id="eval-stars-${s.id}">${starsHTML}</div>
-      <span class="eval-name" style="direction:rtl;unicode-bidi:embed">${s.nom}</span>
+      <span class="eval-name" style="direction:rtl;unicode-bidi:embed;text-align:right;padding-right:8px">${s.nom}</span>
       <button class="eval-reset-btn" onclick="evalReset(${s.id})" title="مسح">✕</button>
       <button class="eval-btn eval-btn-plus" onclick="evalChange(${s.id},+1)">+</button>
     </div>`;
