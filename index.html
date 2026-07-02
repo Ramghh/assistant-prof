@@ -937,6 +937,7 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
           <input type="text" id="cahier-hw" placeholder="ان وجد..."/ style="direction:ltr;text-align:left">
         </div>
         <button class="btn btn-gold btn-full" id="cahier-save-btn" onclick="addCahierEntry()">💾 حفظ الحصة</button>
+        <button class="btn btn-outline btn-full" id="cahier-cancel-edit-btn" onclick="cancelEditCahierEntry()" style="display:none">✖️ إلغاء التعديل</button>
       </div>
     </div>
 
@@ -3591,6 +3592,8 @@ function spawnConfetti(){
 // ══════════════════════════════════════
 //  CAHIER DE TEXTE
 // ══════════════════════════════════════
+let editingCahierId=null;
+
 function getCahierData(){
   const yd=getYearData();
   if(!yd)return[];
@@ -3638,6 +3641,27 @@ function addCahierEntry(){
   const classes=getClasses();
   const cls=classes.find(c=>c.id===classId);
 
+  const cahier=getCahierData();
+
+  if(editingCahierId){
+    // update existing entry in place
+    const idx=cahier.findIndex(e=>e.id===editingCahierId);
+    if(idx!==-1){
+      cahier[idx]={
+        ...cahier[idx],
+        date,time,
+        classId,className:cls?cls.name:'—',
+        unit,lesson,objectives,skills,structure,vocab,hw
+      };
+    }
+    saveAll();
+    cancelEditCahierEntry();
+    renderCahier();
+    const btn=document.getElementById('cahier-save-btn');
+    if(btn){const orig=btn.textContent;btn.textContent='✅ تم التحديث!';btn.style.background='#27ae60';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1800);}
+    return;
+  }
+
   const entry={
     id:'ch'+Date.now(),
     date,time,
@@ -3646,7 +3670,6 @@ function addCahierEntry(){
     createdAt:new Date().toISOString()
   };
 
-  const cahier=getCahierData();
   cahier.unshift(entry); // newest first
   saveAll();
 
@@ -3658,6 +3681,51 @@ function addCahierEntry(){
   // flash the card title briefly
   const btn=document.querySelector('#page-cahier .btn-gold');
   if(btn){const orig=btn.textContent;btn.textContent='✅ تم الحفظ!';btn.style.background='#27ae60';setTimeout(()=>{btn.textContent=orig;btn.style.background='';},1800);}
+}
+
+function editCahierEntry(id){
+  const yd=getYearData();if(!yd||!yd.cahier)return;
+  const e=yd.cahier.find(x=>x.id===id);
+  if(!e)return;
+
+  editingCahierId=id;
+
+  const set=(elId,val)=>{const el=document.getElementById(elId);if(el)el.value=val||'';};
+  set('cahier-date',e.date);
+  set('cahier-time',e.time);
+  set('cahier-unit',e.unit);
+  set('cahier-lesson',e.lesson);
+  set('cahier-objectives',e.objectives);
+  set('cahier-skills',e.skills);
+  set('cahier-structure',e.structure);
+  set('cahier-vocab',e.vocab);
+  set('cahier-hw',e.hw);
+  const sel=document.getElementById('cahier-class-sel');
+  if(sel)sel.value=e.classId;
+
+  const saveBtn=document.getElementById('cahier-save-btn');
+  if(saveBtn)saveBtn.textContent='💾 تحديث الحصة';
+  const cancelBtn=document.getElementById('cahier-cancel-edit-btn');
+  if(cancelBtn)cancelBtn.style.display='block';
+
+  const title=document.getElementById('cahier-form-title');
+  if(title)title.textContent='📓 كراس القسم — تعديل حصة';
+
+  const card=document.querySelector('#page-cahier .card');
+  if(card)card.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cancelEditCahierEntry(){
+  editingCahierId=null;
+  ['cahier-unit','cahier-lesson','cahier-objectives','cahier-skills','cahier-structure','cahier-vocab','cahier-hw']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+
+  const saveBtn=document.getElementById('cahier-save-btn');
+  if(saveBtn)saveBtn.textContent='💾 حفظ الحصة';
+  const cancelBtn=document.getElementById('cahier-cancel-edit-btn');
+  if(cancelBtn)cancelBtn.style.display='none';
+  const title=document.getElementById('cahier-form-title');
+  if(title)title.textContent='📓 كراس القسم — إضافة حصة';
 }
 
 function repeatCahierEntry(id){
@@ -3747,6 +3815,7 @@ function renderCahier(){
       </div>
       ${e.hw?`<div class="cahier-hw-badge" style="direction:ltr;text-align:left">📌 HW: ${e.hw}</div>`:''}
       <div class="cahier-entry-footer">
+        <button class="cahier-del-btn" onclick="editCahierEntry('${e.id}')">✏️ <span>تعديل</span></button>
         <button class="cahier-del-btn" onclick="repeatCahierEntry('${e.id}')">🔁 <span>تكرار</span></button>
         <button class="cahier-del-btn" onclick="printCahierEntry('${e.id}')">🖨️ <span>طباعة</span></button>
         <button class="cahier-del-btn danger" onclick="deleteCahierEntry('${e.id}')">🗑️ <span>حذف</span></button>
