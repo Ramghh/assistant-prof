@@ -1,4 +1,4 @@
-const CACHE_NAME = 'assistant-professeur-v3';
+const CACHE_NAME = 'assistant-professeur-v4';
 const HTML_FILE = './index.html';
 
 // عند التثبيت — نحمّل الـ HTML في الـ cache
