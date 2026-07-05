@@ -2870,7 +2870,7 @@ function printCertificates(){
 
   var trimNames={1:'First Trimester',2:'Second Trimester',3:'Third Trimester'};
   var trimLabel=trimNames[rapportTrim]||'';
-  var subjectName=(typeof getSubject==='function'&&getSubject())?getSubject().name:'English';
+  var subjectName='English';
   var institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
   var teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
   var dateStr=new Date().toLocaleDateString('en-GB');
@@ -2898,15 +2898,20 @@ function printCertificates(){
   var area=document.getElementById('print-area');
   area.innerHTML=certsHtml;
   closeModal('cert-modal');
-  setTimeout(function(){
-    window.print();
-    window.addEventListener('afterprint', function clearCert(){
-      area.innerHTML='';
-      window.removeEventListener('afterprint', clearCert);
+  // wait for two animation frames to guarantee the browser has fully
+  // laid out and painted the new content before invoking print
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      window.print();
+      // NOTE: intentionally NOT clearing area.innerHTML here.
+      // #print-area is display:none outside of @media print, so leaving
+      // the certificates there is invisible and harmless. Clearing it
+      // right after print() is unreliable on Android (the OS print
+      // sheet doesn't reliably signal 'afterprint' before it finishes),
+      // which was wiping the content before the PDF/print actually
+      // captured it. The next print action will overwrite this anyway.
     });
-    // fallback in case afterprint doesn't fire on this device (older WebViews)
-    setTimeout(function(){ area.innerHTML=''; }, 30000);
-  },150);
+  });
 }
 
 </script>
