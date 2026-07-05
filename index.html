@@ -530,19 +530,80 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   .print-grade-table tr{ page-break-inside:avoid; }
 
   /* ── certificates of achievement ── */
-  .cert-page{ direction:ltr; page-break-after:always; display:flex; align-items:center; justify-content:center; height:250mm; }
+  .cert-page{
+    direction:ltr; page-break-after:always;
+    display:flex; align-items:center; justify-content:center;
+    height:250mm;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
   .cert-page.cert-last{ page-break-after:auto; }
-  .cert-border{ border:6px double #8b5e34; border-radius:10px; width:100%; max-width:190mm; padding:30px 40px; text-align:center; background:#fffaf2; }
-  .cert-ribbon{ font-size:2.2rem; margin-bottom:6px; }
-  .cert-heading{ font-family:"Playfair Display",serif; font-size:2rem; font-weight:800; color:#8b5e34; letter-spacing:1px; margin-bottom:14px; }
-  .cert-sub{ font-size:1rem; color:#555; margin-bottom:10px; font-style:italic; }
-  .cert-name{ font-family:"Playfair Display",serif; font-size:2.4rem; font-weight:700; color:#1a1a2e; border-bottom:2px solid #c9a96e; display:inline-block; padding:0 20px 8px; margin-bottom:16px; }
-  .cert-text{ font-size:1.05rem; line-height:1.7; color:#333; margin-bottom:16px; }
-  .cert-quote{ font-size:1.1rem; font-style:italic; color:#8b5e34; font-weight:700; margin-bottom:26px; }
-  .cert-footer{ display:flex; justify-content:space-around; margin-top:20px; }
-  .cert-sign{ font-size:0.85rem; color:#555; }
-  .cert-line{ width:150px; border-top:1px solid #999; margin-bottom:6px; }
-  .cert-institution{ margin-top:20px; font-size:0.8rem; color:#999; }
+
+  .cert-frame{
+    position:relative;
+    width:100%; max-width:195mm;
+    padding:10px;
+    background:linear-gradient(135deg,#8b5e34,#c9a96e 30%,#8b5e34 60%,#c9a96e 100%);
+    border-radius:14px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.12);
+  }
+  .cert-inner{
+    position:relative;
+    background:linear-gradient(160deg,#fffdf8 0%,#fbf3e2 100%);
+    border:1.5px solid #c9a96e;
+    border-radius:8px;
+    padding:44px 46px 36px;
+    text-align:center;
+    overflow:hidden;
+  }
+  .cert-inner::before{
+    /* faint watermark ring behind content */
+    content:"";
+    position:absolute; top:50%; left:50%;
+    width:340px; height:340px;
+    transform:translate(-50%,-50%);
+    border:14px solid rgba(139,94,52,0.045);
+    border-radius:50%;
+    pointer-events:none;
+  }
+  .cert-corner{ position:absolute; width:34px; height:34px; border:3px solid #b8860b; opacity:0.85; }
+  .cert-corner.tl{ top:10px; left:10px; border-right:none; border-bottom:none; border-top-left-radius:6px; }
+  .cert-corner.tr{ top:10px; right:10px; border-left:none; border-bottom:none; border-top-right-radius:6px; }
+  .cert-corner.bl{ bottom:10px; left:10px; border-right:none; border-top:none; border-bottom-left-radius:6px; }
+  .cert-corner.br{ bottom:10px; right:10px; border-left:none; border-top:none; border-bottom-right-radius:6px; }
+
+  .cert-badge{
+    position:relative;
+    width:74px; height:74px; margin:-70px auto 8px;
+    background:radial-gradient(circle at 35% 30%,#f6d375,#b8860b 70%,#8b5e34 100%);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:2.1rem;
+    box-shadow:0 4px 12px rgba(139,94,52,0.4), inset 0 0 0 3px rgba(255,255,255,0.35);
+  }
+  .cert-eyebrow{
+    font-size:0.72rem; letter-spacing:4px; text-transform:uppercase;
+    color:#b8860b; font-weight:700; margin-bottom:6px;
+  }
+  .cert-heading{
+    font-family:"Playfair Display",serif; font-size:2.15rem; font-weight:800;
+    color:#6b4423; letter-spacing:1px; margin-bottom:10px;
+  }
+  .cert-divider{ display:flex; align-items:center; justify-content:center; gap:10px; margin:0 auto 18px; width:70%; }
+  .cert-divider .ln{ flex:1; height:1px; background:linear-gradient(90deg,transparent,#c9a96e,transparent); }
+  .cert-divider .dm{ color:#b8860b; font-size:0.8rem; transform:rotate(45deg); display:inline-block; }
+  .cert-sub{ font-size:1rem; color:#6b6558; margin-bottom:8px; font-style:italic; }
+  .cert-name{
+    font-family:"Playfair Display",serif; font-size:2.5rem; font-weight:700;
+    color:#1a1a2e; display:inline-block; padding:0 30px 10px; margin-bottom:18px;
+    border-bottom:2px solid #c9a96e; position:relative;
+  }
+  .cert-text{ font-size:1.05rem; line-height:1.75; color:#3a352e; margin:0 auto 16px; max-width:480px; }
+  .cert-quote{ font-size:1.12rem; font-style:italic; color:#8b5e34; font-weight:700; margin-bottom:30px; }
+  .cert-footer{ display:flex; justify-content:space-around; margin-top:10px; gap:20px; }
+  .cert-sign{ font-size:0.85rem; color:#555; min-width:150px; }
+  .cert-sign .cert-signature-name{ font-family:"Playfair Display",serif; font-size:1.05rem; color:#333; margin-bottom:2px; }
+  .cert-line{ width:100%; border-top:1px solid #b8a37e; margin-bottom:6px; }
+  .cert-institution{ margin-top:24px; font-size:0.78rem; letter-spacing:1px; color:#a0906f; text-transform:uppercase; }
 }
 #print-area{ display:none; }
 /* ══ SUBJECT SELECTOR ══ */
@@ -2877,20 +2938,28 @@ function printCertificates(){
 
   var certsHtml=qualifiers.map(function(s,i){
     return '<div class="cert-page'+(i===qualifiers.length-1?' cert-last':'')+'">'+
-      '<div class="cert-border">'+
-        '<div class="cert-ribbon">🏆</div>'+
-        '<div class="cert-heading">Certificate of Achievement</div>'+
-        '<div class="cert-sub">This certificate is proudly presented to</div>'+
-        '<div class="cert-name">'+s.nom+'</div>'+
-        '<div class="cert-text">In recognition of '+certTier(s.val)+' in <strong>'+subjectName+'</strong><br>'+
-          'during the '+trimLabel+', '+currentSchoolYear+'<br>'+
-          'with an average of <strong>'+s.val.toFixed(2)+'/20</strong></div>'+
-        '<div class="cert-quote">"Keep up the excellent work!"</div>'+
-        '<div class="cert-footer">'+
-          '<div class="cert-sign"><div class="cert-line"></div>Date: '+dateStr+'</div>'+
-          '<div class="cert-sign"><div class="cert-line"></div>'+(teacher||'Teacher')+'</div>'+
+      '<div class="cert-frame">'+
+        '<div class="cert-inner">'+
+          '<div class="cert-corner tl"></div>'+
+          '<div class="cert-corner tr"></div>'+
+          '<div class="cert-corner bl"></div>'+
+          '<div class="cert-corner br"></div>'+
+          '<div class="cert-badge">🏆</div>'+
+          '<div class="cert-eyebrow">Trimester '+rapportTrim+' &middot; '+currentSchoolYear+'</div>'+
+          '<div class="cert-heading">Certificate of Achievement</div>'+
+          '<div class="cert-divider"><span class="ln"></span><span class="dm">◆</span><span class="ln"></span></div>'+
+          '<div class="cert-sub">This certificate is proudly presented to</div>'+
+          '<div class="cert-name">'+s.nom+'</div>'+
+          '<div class="cert-text">In recognition of '+certTier(s.val)+' in <strong>'+subjectName+'</strong><br>'+
+            'during the '+trimLabel+', '+currentSchoolYear+'<br>'+
+            'with an average of <strong>'+s.val.toFixed(2)+'/20</strong></div>'+
+          '<div class="cert-quote">"Keep up the excellent work!"</div>'+
+          '<div class="cert-footer">'+
+            '<div class="cert-sign"><div class="cert-line"></div>Date: '+dateStr+'</div>'+
+            '<div class="cert-sign"><div class="cert-signature-name">'+(teacher||'Teacher')+'</div><div class="cert-line"></div>Teacher</div>'+
+          '</div>'+
+          (institution?'<div class="cert-institution">'+institution+'</div>':'')+
         '</div>'+
-        (institution?'<div class="cert-institution">'+institution+'</div>':'')+
       '</div>'+
     '</div>';
   }).join('');
