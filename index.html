@@ -528,6 +528,21 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
   }
   /* no page break inside table rows if possible */
   .print-grade-table tr{ page-break-inside:avoid; }
+
+  /* ── certificates of achievement ── */
+  .cert-page{ direction:ltr; page-break-after:always; display:flex; align-items:center; justify-content:center; height:250mm; }
+  .cert-page.cert-last{ page-break-after:auto; }
+  .cert-border{ border:6px double #8b5e34; border-radius:10px; width:100%; max-width:190mm; padding:30px 40px; text-align:center; background:#fffaf2; }
+  .cert-ribbon{ font-size:2.2rem; margin-bottom:6px; }
+  .cert-heading{ font-family:"Playfair Display",serif; font-size:2rem; font-weight:800; color:#8b5e34; letter-spacing:1px; margin-bottom:14px; }
+  .cert-sub{ font-size:1rem; color:#555; margin-bottom:10px; font-style:italic; }
+  .cert-name{ font-family:"Playfair Display",serif; font-size:2.4rem; font-weight:700; color:#1a1a2e; border-bottom:2px solid #c9a96e; display:inline-block; padding:0 20px 8px; margin-bottom:16px; }
+  .cert-text{ font-size:1.05rem; line-height:1.7; color:#333; margin-bottom:16px; }
+  .cert-quote{ font-size:1.1rem; font-style:italic; color:#8b5e34; font-weight:700; margin-bottom:26px; }
+  .cert-footer{ display:flex; justify-content:space-around; margin-top:20px; }
+  .cert-sign{ font-size:0.85rem; color:#555; }
+  .cert-line{ width:150px; border-top:1px solid #999; margin-bottom:6px; }
+  .cert-institution{ margin-top:20px; font-size:0.8rem; color:#999; }
 }
 #print-area{ display:none; }
 /* ══ SUBJECT SELECTOR ══ */
@@ -820,7 +835,10 @@ body.light .auth-info{background:#d4f5e4;border-color:#1a7a4844;}
     <div class="card">
       <div class="card-title" style="justify-content:space-between">
         <span id="rapport-table-title">قائمة النقاط</span>
-        <button class="btn btn-green btn-sm" onclick="exportRapportWord()">📄 تصدير Word</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-green btn-sm" onclick="exportRapportWord()">📄 تصدير Word</button>
+          <button class="btn btn-gold btn-sm" onclick="openCertModal()">🏆 شهادات التفوق</button>
+        </div>
       </div>
       <div style="overflow-x:auto">
         <table class="stbl">
@@ -2798,6 +2816,94 @@ function exportRapportWord(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
 }
 
+function updateCertMode(){
+  var mode=document.querySelector('input[name="cert-mode"]:checked').value;
+  document.getElementById('cert-threshold-field').style.display=mode==='threshold'?'block':'none';
+  document.getElementById('cert-topn-field').style.display=mode==='topn'?'block':'none';
+}
+
+function openCertModal(){
+  document.getElementById('cert-preview-list').innerHTML='';
+  document.getElementById('cert-modal').classList.add('open');
+}
+
+function getCertQualifiers(){
+  var vals=getRapportValues();
+  if(!vals.length)return [];
+  var sorted=vals.slice().sort(function(a,b){return b.val-a.val;});
+  var mode=document.querySelector('input[name="cert-mode"]:checked').value;
+  if(mode==='threshold'){
+    var th=parseFloat(document.getElementById('cert-threshold').value);
+    if(isNaN(th))th=16;
+    return sorted.filter(function(s){return s.val>=th;});
+  }
+  var n=parseInt(document.getElementById('cert-topn').value);
+  if(isNaN(n)||n<1)n=3;
+  return sorted.slice(0,n);
+}
+
+function previewCertQualifiers(){
+  var qualifiers=getCertQualifiers();
+  var list=document.getElementById('cert-preview-list');
+  if(!qualifiers.length){
+    list.innerHTML='<div style="color:var(--red)">ما فما حتى تلميذ يستوفي الشرط.</div>';
+    return;
+  }
+  list.innerHTML='<div style="margin-bottom:6px;font-weight:700">عدد المؤهلين: '+qualifiers.length+'</div>'+
+    qualifiers.map(function(s,i){
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)">'+
+        '<span style="direction:rtl;unicode-bidi:plaintext">'+(i+1)+'. '+s.nom+'</span>'+
+        '<span style="font-weight:700;color:var(--gold)">'+s.val.toFixed(2)+'</span></div>';
+    }).join('');
+}
+
+function certTier(v){
+  if(v>=18)return 'exceptional achievement';
+  if(v>=16)return 'outstanding achievement';
+  if(v>=14)return 'great achievement';
+  return 'achievement';
+}
+
+function printCertificates(){
+  var qualifiers=getCertQualifiers();
+  if(!qualifiers.length){alert('ما فما حتى تلميذ يستوفي الشرط!');return;}
+
+  var trimNames={1:'First Trimester',2:'Second Trimester',3:'Third Trimester'};
+  var trimLabel=trimNames[rapportTrim]||'';
+  var subjectName=(typeof getSubject==='function'&&getSubject())?getSubject().name:'English';
+  var institution=localStorage.getItem('institution_'+currentSchoolYear)||'';
+  var teacher=localStorage.getItem('tname_'+currentSchoolYear+'_'+currentClassId)||'';
+  var dateStr=new Date().toLocaleDateString('en-GB');
+
+  var certsHtml=qualifiers.map(function(s,i){
+    return '<div class="cert-page'+(i===qualifiers.length-1?' cert-last':'')+'">'+
+      '<div class="cert-border">'+
+        '<div class="cert-ribbon">🏆</div>'+
+        '<div class="cert-heading">Certificate of Achievement</div>'+
+        '<div class="cert-sub">This certificate is proudly presented to</div>'+
+        '<div class="cert-name">'+s.nom+'</div>'+
+        '<div class="cert-text">In recognition of '+certTier(s.val)+' in <strong>'+subjectName+'</strong><br>'+
+          'during the '+trimLabel+', '+currentSchoolYear+'<br>'+
+          'with an average of <strong>'+s.val.toFixed(2)+'/20</strong></div>'+
+        '<div class="cert-quote">"Keep up the excellent work!"</div>'+
+        '<div class="cert-footer">'+
+          '<div class="cert-sign"><div class="cert-line"></div>Date: '+dateStr+'</div>'+
+          '<div class="cert-sign"><div class="cert-line"></div>'+(teacher||'Teacher')+'</div>'+
+        '</div>'+
+        (institution?'<div class="cert-institution">'+institution+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  var area=document.getElementById('print-area');
+  area.innerHTML=certsHtml;
+  closeModal('cert-modal');
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){area.innerHTML='';},500);
+  },100);
+}
+
 </script>
 
 <!-- GIST SETTINGS MODAL -->
@@ -4673,6 +4779,37 @@ function printAllCahier(){
   <div class="timer-fs-bar"><div class="timer-fs-bar-inner" id="timer-fs-bar" style="width:100%"></div></div>
   <div class="timer-fs-label" id="timer-fs-label">⏱️ مؤقت الامتحان</div>
   <button class="timer-fs-close" onclick="closeTimerFS()">✕ إغلاق الشاشة الكاملة</button>
+</div>
+
+<!-- CERTIFICATES OF ACHIEVEMENT MODAL -->
+<div class="modal-overlay" id="cert-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">🏆 شهادات التفوق</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:14px">
+      <div style="display:flex;gap:18px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem">
+          <input type="radio" name="cert-mode" value="threshold" checked onchange="updateCertMode()"> حد أدنى للمعدل
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9rem">
+          <input type="radio" name="cert-mode" value="topn" onchange="updateCertMode()"> أفضل عدد ثابت
+        </label>
+      </div>
+      <div id="cert-threshold-field">
+        <label style="font-size:0.82rem;color:var(--text2)">المعدل الأدنى (/20)</label>
+        <input type="number" id="cert-threshold" value="16" min="0" max="20" step="0.5" style="width:100%">
+      </div>
+      <div id="cert-topn-field" style="display:none">
+        <label style="font-size:0.82rem;color:var(--text2)">عدد التلاميذ</label>
+        <input type="number" id="cert-topn" value="3" min="1" max="50" step="1" style="width:100%">
+      </div>
+      <button class="btn btn-outline btn-full" onclick="previewCertQualifiers()">👁️ معاينة المؤهلين</button>
+      <div id="cert-preview-list" style="font-size:0.88rem;max-height:180px;overflow-y:auto"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-gold btn-full" onclick="printCertificates()">🖨️ طباعة الشهائد</button>
+      <button class="btn btn-outline" onclick="closeModal('cert-modal')">إلغاء</button>
+    </div>
+  </div>
 </div>
 
 <div id="print-area"></div>
